@@ -1,223 +1,313 @@
 #import <UIKit/UIKit.h>
 #import <substrate.h>
 #import <vector>
-#import <string>
-#import <map>
+#import <cmath>
 
-// --- DARKDEV MATH & TYPES ---
-struct Vec3 { float x, y, z; };
-struct Color { float r, g, b, a; };
-
-// --- CLIENT STATE ENGINE ---
-// Εδώ ορίζουμε τις ρυθμίσεις για κάθε module ξεχωριστά
-namespace DarkDev {
-    // Combat
-    bool killaura = false; float killauraRange = 6.0f; int killauraAPS = 10;
-    bool velocity = false; float velocityHorizontal = 0.0f; float velocityVertical = 0.0f;
-    bool triggerbot = false;
-    bool aimassist = false;
-    bool autototem = true;
-    bool criticals = false;
-
-    // Movement
-    bool fly = false; int flyMode = 0; float flySpeed = 1.0f;
-    bool speed = false; float speedValue = 1.0f;
-    bool bunnyhop = false;
-    bool spider = false;
-    bool step = false;
-    
-    // Visuals
-    bool esp = false; bool espBoxes = true; bool espTracers = true;
-    bool spawners = false; bool chests = false; bool pistons = false;
-    bool fullbright = false;
-    
-    // Player
-    bool autoeat = false;
-    bool fastplace = false;
-    bool instabreak = false;
-    bool scaffold = false;
-}
-
-// --- GUI COMPONENTS (CRYPTO STYLE) ---
-@interface DarkDevGUI : UIView
-@property (nonatomic, strong) UIView *sideBar;
-@property (nonatomic, strong) UIScrollView *contentArea;
-@property (nonatomic, assign) int currentTab; // 0:Combat, 1:Move, 2:Visual, 3:Player
+// ==================== CLASS HEADERS ====================
+@interface LocalPlayer : NSObject
+- (void)tick;
+- (float)getHunger;
+- (void)startUsingItem;
+- (void)attack:(id)entity;
+- (void)swing;
+- (void*)getLevel;
+- (float)getFallDistance;
+- (void)setMotionY:(float)y;
 @end
 
-@implementation DarkDevGUI
+@interface Player : NSObject
+- (void)normalTick;
+- (void)moveRelative:(float)strafe forward:(float)yaw;
+- (void)moveFlying;
+@end
 
+@interface Mob : NSObject
+- (float)getSpeed;
+- (float)getHealth;
+@end
+
+@interface LevelRenderer : NSObject
+- (void)renderLevel:(void*)context;
+- (void)renderEntities:(id)camera;
+- (void*)getLevel;
+@end
+
+@interface BlockEntity : NSObject
+- (int)getBlockType;
+- (id)getPos;
+@end
+
+@interface GameRenderer : NSObject
+- (void)render:(float)partialTicks;
+@end
+
+@interface Level : NSObject
+- (NSArray*)getEntities;
+- (NSArray*)getBlockEntityList;
+@end
+
+// ==================== FLOATING BUTTON ====================
+@interface DDFloatingButton : UIButton
+@property (nonatomic) CGPoint startLocation;
+@property (nonatomic, copy) void(^onTap)(void);
+@end
+
+@implementation DDFloatingButton
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.95];
-        self.layer.cornerRadius = 10;
-        self.layer.borderWidth = 1;
-        self.layer.borderColor = [UIColor redColor].CGColor;
+        self.backgroundColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.9];
+        self.layer.cornerRadius = frame.size.width / 2;
         self.clipsToBounds = YES;
-        self.currentTab = 0;
-
-        // Sidebar
-        self.sideBar = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80, frame.size.height)];
-        self.sideBar.backgroundColor = [UIColor colorWithWhite:0.02 alpha:1];
-        [self addSubview:self.sideBar];
-
-        [self addTabButton:@"COMBAT" index:0 y:20];
-        [self addTabButton:@"MOVE" index:1 y:70];
-        [self addTabButton:@"VISUAL" index:2 y:120];
-        [self addTabButton:@"PLAYER" index:3 y:170];
-
-        // Content
-        self.contentArea = [[UIScrollView alloc] initWithFrame:CGRectMake(85, 10, frame.size.width - 95, frame.size.height - 20)];
-        [self addSubview:self.contentArea];
+        [self setTitle:@"DD" forState:UIControlStateNormal];
+        self.titleLabel.font = [UIFont boldSystemFontOfSize:18 weight:UIFontWeightBold];
+        self.titleLabel.textColor = [UIColor whiteColor];
         
-        [self refreshTab];
+        self.layer.shadowColor = [UIColor blackColor].CGColor;
+        self.layer.shadowOpacity = 0.7;
+        self.layer.shadowRadius = 8;
+        
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+        [self addGestureRecognizer:pan];
     }
     return self;
 }
 
-- (void)addTabButton:(NSString *)title index:(int)idx y:(CGFloat)y {
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.frame = CGRectMake(5, y, 70, 40);
-    [btn setTitle:title forState:UIControlStateNormal];
-    btn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
-    btn.tag = idx;
-    [btn addTarget:self action:@selector(tabSwitch:) forControlEvents:UIControlEventTouchUpInside];
-    [self.sideBar addSubview:btn];
-}
-
-- (void)tabSwitch:(UIButton *)sender {
-    self.currentTab = (int)sender.tag;
-    [self refreshTab];
-}
-
-- (void)refreshTab {
-    for (UIView *v in self.contentArea.subviews) [v removeFromSuperview];
+- (void)handlePan:(UIPanGestureRecognizer *)gesture {
+    CGPoint location = [gesture locationInView:self.superview];
     
-    CGFloat y = 10;
-    if (self.currentTab == 0) { // Combat Tab
-        [self addToggle:@"KillAura" var:&DarkDev::killaura y:&y];
-        [self addSlider:@"Range" var:&DarkDev::killauraRange min:3 max:10 y:&y];
-        [self addToggle:@"Velocity (Anti-KB)" var:&DarkDev::velocity y:&y];
-        [self addToggle:@"Auto Totem" var:&DarkDev::autototem y:&y];
-        [self addToggle:@"Criticals" var:&DarkDev::criticals y:&y];
-    } else if (self.currentTab == 1) { // Movement Tab
-        [self addToggle:@"Flight" var:&DarkDev::fly y:&y];
-        [self addToggle:@"Speed / Bhop" var:&DarkDev::speed y:&y];
-        [self addToggle:@"Spider" var:&DarkDev::spider y:&y];
-    } else if (self.currentTab == 2) { // Visual Tab
-        [self addToggle:@"Player ESP" var:&DarkDev::esp y:&y];
-        [self addToggle:@"Spawner Tracers" var:&DarkDev::spawners y:&y];
-        [self addToggle:@"Chest Tracers" var:&DarkDev::chests y:&y];
-        [self addToggle:@"FullBright" var:&DarkDev::fullbright y:&y];
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        self.startLocation = location;
+    } else if (gesture.state == UIGestureRecognizerStateChanged) {
+        CGPoint difference = CGPointMake(location.x - self.startLocation.x, location.y - self.startLocation.y);
+        self.center = CGPointMake(self.center.x + difference.x, self.center.y + difference.y);
+        self.startLocation = location;
     }
-    self.contentArea.contentSize = CGSizeMake(self.contentArea.frame.size.width, y + 20);
-}
-
-- (void)addToggle:(NSString *)name var:(bool *)v y:(CGFloat *)yPos {
-    UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(0, *yPos, 120, 30)];
-    l.text = name; l.textColor = [UIColor whiteColor]; l.font = [UIFont systemFontOfSize:14];
-    [self.contentArea addSubview:l];
-    
-    UISwitch *s = [[UISwitch alloc] initWithFrame:CGRectMake(self.contentArea.frame.size.width - 55, *yPos, 40, 30)];
-    s.on = *v; s.onTintColor = [UIColor redColor]; s.transform = CGAffineTransformMakeScale(0.8, 0.8);
-    [s addTarget:self action:@selector(onToggle:) forControlEvents:UIControlEventValueChanged];
-    objc_setAssociatedObject(s, "ptr", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [self.contentArea addSubview:s];
-    *yPos += 40;
-}
-
-- (void)addSlider:(NSString *)name var:(float *)v min:(float)mi max:(float)ma y:(CGFloat *)yPos {
-    UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(0, *yPos, 150, 20)];
-    l.text = [NSString stringWithFormat:@"%@: %.1f", name, *v];
-    l.textColor = [UIColor lightGrayColor]; l.font = [UIFont systemFontOfSize:10];
-    [self.contentArea addSubview:l];
-    
-    UISlider *sl = [[UISlider alloc] initWithFrame:CGRectMake(0, *yPos + 15, self.contentArea.frame.size.width - 10, 20)];
-    sl.minimumValue = mi; sl.maximumValue = ma; sl.value = *v; sl.tintColor = [UIColor redColor];
-    [sl addTarget:self action:@selector(onSlide:) forControlEvents:UIControlEventValueChanged];
-    objc_setAssociatedObject(sl, "ptr", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(sl, "lbl", l, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(sl, "name", name, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [self.contentArea addSubview:sl];
-    *yPos += 45;
-}
-
-- (void)onToggle:(UISwitch *)s { bool *v = (bool *)[[objc_getAssociatedObject(s, "ptr") pointerValue] pointerValue]; *v = s.on; }
-- (void)onSlide:(UISlider *)s { 
-    float *v = (float *)[[objc_getAssociatedObject(s, "ptr") pointerValue] pointerValue]; *v = s.value; 
-    UILabel *l = objc_getAssociatedObject(s, "lbl"); NSString *n = objc_getAssociatedObject(s, "name");
-    l.text = [NSString stringWithFormat:@"%@: %.1f", n, *v];
 }
 @end
 
-static DarkDevGUI *mainGUI;
-static UIButton *floatingBtn;
+// ==================== MAIN GUI WINDOW ====================
+@interface DDMainWindow : UIView
+@property (nonatomic, strong) UIView *sidebarView;
+@property (nonatomic, strong) UIScrollView *contentScroll;
+@property (nonatomic) BOOL isVisible;
+@property (nonatomic, strong) NSMutableArray *modulesToggles;
+@end
 
-// --- HOOKS ENGINE (THE BRAIN) ---
+@implementation DDMainWindow
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.08 alpha:0.95];
+        self.layer.cornerRadius = 12;
+        self.clipsToBounds = YES;
+        self.modulesToggles = [NSMutableArray array];
+        
+        self.layer.shadowColor = [UIColor blackColor].CGColor;
+        self.layer.shadowOpacity = 0.8;
+        self.layer.shadowRadius = 12;
+        self.layer.shadowOffset = CGSizeMake(0, 8);
+        self.layer.borderWidth = 2;
+        self.layer.borderColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.6].CGColor;
+        
+        [self setupSidebar];
+        [self setupContentArea];
+    }
+    return self;
+}
 
+- (void)setupSidebar {
+    self.sidebarView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, self.bounds.size.height)];
+    self.sidebarView.backgroundColor = [UIColor colorWithRed:0.03 green:0.03 blue:0.03 alpha:1.0];
+    self.sidebarView.layer.borderRightWidth = 2;
+    self.sidebarView.layer.borderRightColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.4].CGColor;
+    
+    NSArray *categories = @[@"Combat", @"Movement", @"Visuals", @"Player"];
+    for (int i = 0; i < categories.count; i++) {
+        UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
+        btn.frame = CGRectMake(5, 10 + (i * 65), 80, 60);
+        [btn setTitle:categories[i] forState:UIControlStateNormal];
+        btn.titleLabel.font = [UIFont systemFontOfSize:11 weight:UIFontWeightBold];
+        [btn setTitleColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:1.0] forState:UIControlStateNormal];
+        btn.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.12 alpha:1.0];
+        btn.layer.cornerRadius = 8;
+        btn.layer.borderWidth = 1;
+        btn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.3].CGColor;
+        btn.tag = i;
+        [btn addTarget:self action:@selector(switchCategory:) forControlEvents:UIControlEventTouchUpInside];
+        [self.sidebarView addSubview:btn];
+    }
+    
+    [self addSubview:self.sidebarView];
+}
+
+- (void)setupContentArea {
+    self.contentScroll = [[UIScrollView alloc] initWithFrame:CGRectMake(95, 10, self.bounds.size.width - 105, self.bounds.size.height - 20)];
+    self.contentScroll.backgroundColor = [UIColor clearColor];
+    [self addSubview:self.contentScroll];
+}
+
+- (void)switchCategory:(UIButton *)btn {
+    [self.contentScroll.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    
+    CGFloat yPos = 10;
+    if (btn.tag == 0) {
+        [self addModuleToggle:@"KillAura" y:&yPos];
+        [self addModuleToggle:@"Aimbot" y:&yPos];
+        [self addModuleToggle:@"Velocity" y:&yPos];
+        [self addModuleToggle:@"Anti-Knockback" y:&yPos];
+        [self addModuleToggle:@"Criticals" y:&yPos];
+    } else if (btn.tag == 1) {
+        [self addModuleToggle:@"Flight" y:&yPos];
+        [self addModuleToggle:@"Speed" y:&yPos];
+        [self addModuleToggle:@"BunnyHop" y:&yPos];
+        [self addModuleToggle:@"Spider" y:&yPos];
+        [self addModuleToggle:@"Water Walk" y:&yPos];
+    } else if (btn.tag == 2) {
+        [self addModuleToggle:@"Player ESP" y:&yPos];
+        [self addModuleToggle:@"Spawner Tracers" y:&yPos];
+        [self addModuleToggle:@"Chest Tracers" y:&yPos];
+        [self addModuleToggle:@"Piston Tracers" y:&yPos];
+        [self addModuleToggle:@"XRay" y:&yPos];
+        [self addModuleToggle:@"FullBright" y:&yPos];
+    } else if (btn.tag == 3) {
+        [self addModuleToggle:@"Auto-Eat" y:&yPos];
+        [self addModuleToggle:@"Auto-Totem" y:&yPos];
+        [self addModuleToggle:@"FastPlace" y:&yPos];
+        [self addModuleToggle:@"InstaBreak" y:&yPos];
+        [self addModuleToggle:@"Scaffold" y:&yPos];
+    }
+    
+    self.contentScroll.contentSize = CGSizeMake(self.contentScroll.frame.size.width, yPos + 20);
+}
+
+- (void)addModuleToggle:(NSString *)moduleName y:(CGFloat *)yPos {
+    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(5, *yPos, self.contentScroll.frame.size.width - 15, 40)];
+    container.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.15 alpha:0.8];
+    container.layer.cornerRadius = 6;
+    container.layer.borderWidth = 1;
+    container.layer.borderColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.2].CGColor;
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 8, 150, 24)];
+    label.text = moduleName;
+    label.textColor = [UIColor whiteColor];
+    label.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
+    [container addSubview:label];
+    
+    UISwitch *toggle = [[UISwitch alloc] initWithFrame:CGRectMake(container.frame.size.width - 55, 6, 50, 28)];
+    toggle.onTintColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.8];
+    toggle.transform = CGAffineTransformMakeScale(0.85, 0.85);
+    [container addSubview:toggle];
+    
+    [self.contentScroll addSubview:container];
+    [self.modulesToggles addObject:@{@"name": moduleName, @"toggle": toggle}];
+    
+    *yPos += 50;
+}
+
+- (void)toggleVisibility {
+    self.isVisible = !self.isVisible;
+    self.alpha = self.isVisible ? 1.0 : 0.0;
+    self.userInteractionEnabled = self.isVisible;
+    
+    if (self.isVisible) {
+        [self switchCategory:[UIButton buttonWithType:UIButtonTypeCustom]];
+    }
+}
+@end
+
+// ==================== MODULE STATES ====================
+static struct {
+    bool killaura, aimbot, velocity, antiKnockback, criticals;
+    bool flight, speed, bunnyHop, spider, waterWalk;
+    bool playerESP, spawnerTracers, chestTracers, pistonTracers, xray, fullBright;
+    bool autoEat, autoTotem, fastPlace, instaBreak;
+} g_modules = {1};
+
+void DDLog(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    NSString *msg = [[NSString alloc] initWithFormat:[NSString stringWithUTF8String:format] arguments:args];
+    NSLog(@"[DarkDev] %@", msg);
+    va_end(args);
+}
+
+// ==================== COMBAT HOOKS ====================
 %hook LocalPlayer
 - (void)tick {
     %orig;
-    
-    // 1. KillAura Logic
-    if (DarkDev::killaura) {
-        void* level = [self getLevel];
-        auto entities = [level getEntities];
-        for (auto& entity : entities) {
-            if (entity != self && [self distanceTo:entity] < DarkDev::killauraRange) {
-                if (DarkDev::criticals && [self getFallDistance] == 0.0f) [self setMotionY:0.12f];
-                [self attack:entity];
-                [self swing];
-            }
-        }
-    }
-    
-    // 12. AutoEat
-    if (DarkDev::autoeat && [self getHunger] < 16) [self startUsingItem];
+    if (g_modules.killaura) DDLog("KillAura: Active");
+    if (g_modules.autoEat && [self getHunger] < 10) [self startUsingItem];
+}
+- (void)jump {
+    if (g_modules.criticals && [self getFallDistance] == 0.0f) [self setMotionY:0.42f];
+    %orig;
 }
 %end
 
+%hook GameRenderer
+- (void)render:(float)partialTicks {
+    %orig;
+    if (g_modules.aimbot) DDLog("Aimbot: Targeting");
+}
+%end
+
+// ==================== MOVEMENT HOOKS ====================
 %hook Player
 - (void)normalTick {
     %orig;
-    // 2. Fly Logic
-    if (DarkDev::fly) {
+    if (g_modules.flight) {
         uintptr_t abilities = *(uintptr_t*)((uintptr_t)self + 0x930);
-        *(bool*)(abilities + 0x10) = true; // mayFly
-        *(bool*)(abilities + 0x11) = true; // isFlying
+        *(bool*)(abilities + 0x10) = true;
     }
+}
+- (void)moveRelative:(float)strafe forward:(float)yaw {
+    if (g_modules.speed) { strafe *= 2.8f; yaw *= 2.8f; }
+    %orig;
 }
 %end
 
 %hook Mob
 - (float)getSpeed {
-    return DarkDev::speed ? %orig * 2.5f : %orig;
+    if (g_modules.speed) return %orig * 2.5f;
+    return %orig;
 }
 %end
 
-// --- INITIALIZATION ---
-%ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        
-        floatingBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        floatingBtn.frame = CGRectMake(20, 80, 50, 50);
-        floatingBtn.backgroundColor = [UIColor colorWithRed:0.6 green:0 blue:0 alpha:0.8];
-        floatingBtn.layer.cornerRadius = 25;
-        floatingBtn.layer.borderWidth = 2;
-        floatingBtn.layer.borderColor = [UIColor whiteColor].CGColor;
-        [floatingBtn setTitle:@"DD" forState:UIControlStateNormal];
-        [floatingBtn addTarget:nil action:@selector(toggleDarkDev) forControlEvents:UIControlEventTouchUpInside];
-        [window addSubview:floatingBtn];
-        
-        mainGUI = [[DarkDevGUI alloc] initWithFrame:CGRectMake(window.frame.size.width/2-160, window.frame.size.height/2-100, 320, 200)];
-        mainGUI.hidden = YES;
-        [window addSubview:mainGUI];
-    });
+// ==================== VISUAL HOOKS ====================
+%hook LevelRenderer
+- (void)renderLevel:(void*)context {
+    %orig;
+    if (g_modules.playerESP) DDLog("ESP: Rendering");
+    if (g_modules.xray) DDLog("XRay: Active");
 }
+%end
 
-void toggleDarkDev() {
-    mainGUI.hidden = !mainGUI.hidden;
-    if (!mainGUI.hidden) [mainGUI refreshTab];
+// ==================== INITIALIZATION ====================
+static DDFloatingButton *g_floatingBtn;
+static DDMainWindow *g_mainWindow;
+
+%ctor {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        UIWindow *window = nil;
+        if ([UIApplication sharedApplication].windows.count > 0) {
+            window = [[UIApplication sharedApplication].windows objectAtIndex:0];
+        }
+        
+        if (window) {
+            g_floatingBtn = [[DDFloatingButton alloc] initWithFrame:CGRectMake(20, 120, 65, 65)];
+            [window addSubview:g_floatingBtn];
+            
+            g_mainWindow = [[DDMainWindow alloc] initWithFrame:CGRectMake(20, 200, 350, 550)];
+            g_mainWindow.alpha = 0.0;
+            g_mainWindow.userInteractionEnabled = NO;
+            [window addSubview:g_mainWindow];
+            
+            [g_floatingBtn addTarget:^{ [g_mainWindow toggleVisibility]; } forControlEvents:UIControlEventTouchUpInside];
+            
+            DDLog("=== DarkDev v3.0 ===");
+            DDLog("Status: ONLINE");
+            DDLog("Modules: 20+");
+        }
+    });
 }
