@@ -121,25 +121,31 @@ void logClient(NSString *msg) {
     logClient(@"Initializing DarkDev Client...");
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        // Ασφαλής τρόπος για iOS 13+
         UIWindow *window = nil;
-        if (@available(iOS 13.0, *)) {
-            // Use the first window scene
-            for (UIWindowScene *windowScene in UIApplication.sharedApplication.connectedScenes) {
-                if (windowScene.windows.count > 0) {
-                    window = windowScene.windows.firstObject;
-                    break;
+        
+        // Try to get window from UIWindowScene (iOS 13+)
+        NSArray *windows = nil;
+        if ([UIApplication sharedApplication].connectedScenes) {
+            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    windows = [(UIWindowScene *)scene windows];
+                    if (windows.count > 0) {
+                        window = [windows objectAtIndex:0];
+                        break;
+                    }
                 }
             }
-        } else {
-            // Fallback για παλιότερα iOS
+        }
+        
+        // Fallback for older iOS versions
+        if (!window && [UIApplication sharedApplication].keyWindow) {
             window = [UIApplication sharedApplication].keyWindow;
         }
         
-        if (window) {
+        if (window && window.rootViewController) {
             // Simple Alert GUI
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"§0DarkDev §fClient" 
-                message:@"§7Status: §aOnline\n§7Modules: §fCore 12 Loaded" 
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"DarkDev Client" 
+                message:@"Status: Online\nModules: Core 12 Loaded" 
                 preferredStyle:UIAlertControllerStyleAlert];
             [alert addAction:[UIAlertAction actionWithTitle:@"Launch" style:UIAlertActionStyleDefault handler:nil]];
             [window.rootViewController presentViewController:alert animated:YES completion:nil];
