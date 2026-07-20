@@ -1,0 +1,9 @@
+Package: app.darkdev.client
+Name: DarkDev Client
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Premium Utility Mod for Minecraft Bedrock iOS
+Maintainer: Sotiris Gkalimanis
+Author: Sotiris Gkalimanis
+Section: Tweaks
