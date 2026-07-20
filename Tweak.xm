@@ -121,15 +121,30 @@ void logClient(NSString *msg) {
     logClient(@"Initializing DarkDev Client...");
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
+        // Ασφαλής τρόπος για iOS 13+
+        UIWindow *window = nil;
+        if (@available(iOS 13.0, *)) {
+            // Use the first window scene
+            for (UIWindowScene *windowScene in UIApplication.sharedApplication.connectedScenes) {
+                if (windowScene.windows.count > 0) {
+                    window = windowScene.windows.firstObject;
+                    break;
+                }
+            }
+        } else {
+            // Fallback για παλιότερα iOS
+            window = [UIApplication sharedApplication].keyWindow;
+        }
         
-        // Simple Alert GUI
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"§0DarkDev §fClient" 
-            message:@"§7Status: §aOnline\n§7Modules: §fCore 12 Loaded" 
-            preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"Launch" style:UIAlertActionStyleDefault handler:nil]];
-        [window.rootViewController presentViewController:alert animated:YES completion:nil];
-        
-        logClient(@"GUI Ready.");
+        if (window) {
+            // Simple Alert GUI
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"§0DarkDev §fClient" 
+                message:@"§7Status: §aOnline\n§7Modules: §fCore 12 Loaded" 
+                preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:@"Launch" style:UIAlertActionStyleDefault handler:nil]];
+            [window.rootViewController presentViewController:alert animated:YES completion:nil];
+            
+            logClient(@"GUI Ready.");
+        }
     });
 }
