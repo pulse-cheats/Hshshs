@@ -1,0 +1,28 @@
+name: Build DarkDev
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Theos
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+          
+      - name: Setup SDK
+        run: |
+          git clone https://github.com/L-S-D/Minecraft-iOS-SDK SDK
+          
+      - name: Build Package
+        run: |
+          export THEOS=~/theos
+          make package
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: DarkDev-Dylib
+          path: packages/*.deb
