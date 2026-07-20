@@ -16,7 +16,7 @@ jobs:
           
       - name: Setup SDK
         run: |
-          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/L-S-D/Minecraft-iOS-SDK SDK
+          git clone --depth 1 https://github.com/L-S-D/Minecraft-iOS-SDK SDK
           
       - name: Build DarkDev
         run: |
