@@ -1,4 +1,4 @@
-name: Build DarkDev
+name: Build DarkDev Client
 on: [push, pull_request]
 
 jobs:
@@ -6,7 +6,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Theos
         run: |
@@ -16,13 +16,13 @@ jobs:
         run: |
           git clone https://github.com/L-S-D/Minecraft-iOS-SDK SDK
           
-      - name: Build Package
+      - name: Build DarkDev
         run: |
           export THEOS=~/theos
           make package
           
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload DarkDev Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: DarkDev-Dylib
           path: packages/*.deb
