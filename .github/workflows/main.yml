@@ -14,13 +14,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           
-      - name: Setup SDK
-        run: |
-          git clone --depth 1 https://github.com/L-S-D/Minecraft-iOS-SDK SDK
-          
-      - name: Build DarkDev
+      - name: Build DarkDev Dylib
         run: |
           export THEOS=~/theos
+          export SDKVERSION=latest
           make package
           
       - name: Upload DarkDev Artifact
