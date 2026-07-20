@@ -116,41 +116,10 @@ void logClient(NSString *msg) {
 }
 %end
 
-// --- INITIALIZATION & WATERMARK ---
+// --- INITIALIZATION ---
 %ctor {
     logClient(@"Initializing DarkDev Client...");
-    
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window = nil;
-        
-        // Try to get window from UIWindowScene (iOS 13+)
-        NSArray *windows = nil;
-        if ([UIApplication sharedApplication].connectedScenes) {
-            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if ([scene isKindOfClass:[UIWindowScene class]]) {
-                    windows = [(UIWindowScene *)scene windows];
-                    if (windows.count > 0) {
-                        window = [windows objectAtIndex:0];
-                        break;
-                    }
-                }
-            }
-        }
-        
-        // Fallback for older iOS versions
-        if (!window && [UIApplication sharedApplication].keyWindow) {
-            window = [UIApplication sharedApplication].keyWindow;
-        }
-        
-        if (window && window.rootViewController) {
-            // Simple Alert GUI
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"DarkDev Client" 
-                message:@"Status: Online\nModules: Core 12 Loaded" 
-                preferredStyle:UIAlertControllerStyleAlert];
-            [alert addAction:[UIAlertAction actionWithTitle:@"Launch" style:UIAlertActionStyleDefault handler:nil]];
-            [window.rootViewController presentViewController:alert animated:YES completion:nil];
-            
-            logClient(@"GUI Ready.");
-        }
-    });
+    logClient(@"Status: Online");
+    logClient(@"Modules: Core 12 Loaded");
+    logClient(@"GUI Ready.");
 }
