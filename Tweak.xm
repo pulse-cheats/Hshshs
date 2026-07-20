@@ -119,7 +119,7 @@
 - (void)setupSidebar {
     self.sidebarView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, self.bounds.size.height)];
     self.sidebarView.backgroundColor = [UIColor colorWithRed:0.03 green:0.03 blue:0.03 alpha:1.0];
-    self.sidebarView.layer.borderRightWidth = 2;
+    self.sidebarView.layer.borderWidth = 2;
     self.sidebarView.layer.borderRightColor = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.4].CGColor;
     
     NSArray *categories = @[@"Combat", @"Movement", @"Visuals", @"Player"];
