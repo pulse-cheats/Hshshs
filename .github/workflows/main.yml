@@ -17,8 +17,8 @@ jobs:
           TARGET = iphone:clang:latest:14.0
           include \$(THEOS)/makefiles/common.mk
           TWEAK_NAME = DarkDev
-          DarkDev_FILES = tweak.mm
-          DarkDev_CFLAGS = -fobjc-arc -std=c++11
+          DarkDev_FILES = Tweak.xm
+          DarkDev_CFLAGS = -fobjc-arc
           DarkDev_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore
           include \$(THEOS_MAKE_PATH)/tweak.mk
           EOF
@@ -34,11 +34,10 @@ jobs:
           Author: Sotiris
           EOF
 
-          # 3. The Big Tweak.mm (12 Modules + GUI)
-          cat <<EOF > tweak.mm
+          # 3. The Big Tweak.xm (12 Modules + Fixed GUI)
+          cat <<EOF > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
-          #import <vector>
 
           // --- DECLARATIONS ---
           class Entity;
@@ -50,8 +49,6 @@ jobs:
               float getFallDistance();
               int getHunger();
               void startUsingItem();
-              float distanceTo(Entity*);
-              void* getLevel();
           };
 
           // --- 12 MODULE SETTINGS ---
@@ -77,7 +74,7 @@ jobs:
                   self.layer.cornerRadius = 15;
                   
                   UILabel *header = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, 40)];
-                  header.text = @"DARKDEV CLIENT v1.0";
+                  header.text = @"DARKDEV v1.0";
                   header.textColor = [UIColor whiteColor];
                   header.textAlignment = NSTextAlignmentCenter;
                   header.backgroundColor = [UIColor redColor];
@@ -111,18 +108,24 @@ jobs:
               UISwitch *s = [[UISwitch alloc] initWithFrame:CGRectMake(150, *y, 0, 0)];
               s.onTintColor = [UIColor redColor];
               [s addTarget:self action:@selector(sw:) forControlEvents:UIControlEventValueChanged];
-              objc_setAssociatedObject(s, "p", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+              
+              // Fixed: Using NSValue correctly
+              objc_setAssociatedObject(s, "ptr", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+              
               [self.scroll addSubview:s];
               *y += 45;
           }
 
           - (void)sw:(UISwitch *)s {
-              bool *v = (bool *)[[objc_getAssociatedObject(s, "p") pointerValue] pointerValue];
+              NSValue *val = objc_getAssociatedObject(s, "ptr");
+              bool *v = (bool *)[val pointerValue];
               *v = s.on;
           }
           @end
 
           static DarkDevGUI *menu;
+
+          void tglM() { if(menu) menu.hidden = !menu.hidden; }
 
           // --- HOOKS ---
           void (*old_tick)(LocalPlayer*);
@@ -152,7 +155,6 @@ jobs:
               });
               MSHookFunction(NULL, (void *)&new_tick, (void **)&old_tick);
           }
-          void tglM() { if(menu) menu.hidden = !menu.hidden; }
           EOF
 
       - name: Setup Theos & SDK
@@ -175,5 +177,5 @@ jobs:
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Dylib-Full-V1
+          name: DarkDev-Dylib-Full-Fixed
           path: output/*.dylib
