@@ -10,17 +10,24 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile
+          # 1. Makefile - Ρυθμίσεις για Scarlet & Sideloadly
           cat <<'EOF' > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
+          # Στοχεύουμε μόνο arm64 για μέγιστη συμβατότητα
+          ARCHS = arm64
           TARGET = iphone:clang:latest:14.0
+          
           include $(THEOS)/makefiles/common.mk
+          
           TWEAK_NAME = DarkDev
           DarkDev_FILES = Tweak.xm
           DarkDev_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-error
           DarkDev_LDFLAGS = -undefined dynamic_lookup
+          # Εντολή για Ad-hoc signing που ζητάει το Scarlet
+          DarkDev_CODESIGN_FLAGS = -S/dev/null
           DarkDev_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore
+          
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
 
@@ -35,7 +42,7 @@ jobs:
           Author: Sotiris
           EOF
 
-          # 3. Tweak.xm
+          # 3. Tweak.xm (Stable Version)
           cat <<'EOF' > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
@@ -145,9 +152,7 @@ jobs:
           EOF
 
       - name: Setup Dependencies
-        run: |
-          # Εγκατάσταση ldid για να μην βγάζει Error 127
-          brew install ldid
+        run: brew install ldid
 
       - name: Setup Theos & SDK
         run: |
@@ -165,10 +170,9 @@ jobs:
         run: |
           mkdir -p final_output
           find . -name "*.dylib" -exec cp {} final_output/DarkDev.dylib \;
-          ls -l final_output/DarkDev.dylib
 
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Dylib
+          name: DarkDev-Scarlet-Ready
           path: final_output/DarkDev.dylib
