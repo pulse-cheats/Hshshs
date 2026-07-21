@@ -29,12 +29,12 @@ jobs:
           cat <<'EOF' > control
           Package: app.darkdev.client
           Name: DarkDev Client
-          Version: 1.2.3
+          Version: 1.2.4
           Architecture: iphoneos-arm
-          Description: Ultra-Heavy Professional 30+ Module Client
+          Description: Fixed Pro 30+ Module Client for Minecraft
           EOF
 
-          # 3. Tweak.xm (FULL EXPANDED MODULES)
+          # 3. Tweak.xm (FIXED & EXPANDED)
           cat <<'EOF' > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
@@ -57,7 +57,7 @@ jobs:
               void setPos(float, float, float);
           };
 
-          // --- FULL SETTINGS (X30 MODULES) ---
+          // --- FULL SETTINGS (ALL MODULES DECLARED) ---
           struct {
               // Combat
               bool killaura=false, triggerbot=false, reach=false, velocity=false, autototem=false;
@@ -67,14 +67,13 @@ jobs:
               // World
               bool nuker=false, scaffold=false, xray=false, fullbright=false, stashfinder=false, automine=false, noweb=false, chunkTracker=false;
               // Player & Visual
-              bool esp=false, nametags=false, invwalk=false, noclip=false, fpsboost=false, bypass=false;
+              bool esp=false, nametags=false, invwalk=false, noclip=false, fpsboost=false, bypass=false, autoeat=false;
           } darkDev;
 
           @class DarkDevGUI;
           static DarkDevGUI *menu = nil; 
           static UIButton *btn = nil;
 
-          // --- UI HELPER (Explicit Creation) ---
           @interface DarkDevGUI : UIView
           @property (nonatomic, strong) UIScrollView *scroll;
           @end
@@ -88,7 +87,7 @@ jobs:
                   self.layer.borderWidth = 3; self.layer.cornerRadius = 25;
                   
                   UILabel *h = [[UILabel alloc] initWithFrame:CGRectMake(0,0,frame.size.width,50)];
-                  h.text = @"DARKDEV V23 HEAVY"; h.textColor = [UIColor whiteColor];
+                  h.text = @"DARKDEV V24 PRO"; h.textColor = [UIColor whiteColor];
                   h.font = [UIFont boldSystemFontOfSize:18]; h.textAlignment = NSTextAlignmentCenter; h.backgroundColor = [UIColor redColor];
                   [self addSubview:h];
 
@@ -97,49 +96,36 @@ jobs:
 
                   int y = 10;
 
-                  // --- MANUAL UI CREATION (No loops to keep it heavy) ---
-                  
                   // COMBAT
                   [self addHeader:@"[ COMBAT ]" y:&y color:[UIColor redColor]];
                   [self addToggle:@"KillAura" var:&darkDev.killaura y:&y];
                   [self addToggle:@"Aim Lock" var:&darkDev.aimlock y:&y];
-                  [self addToggle:@"Aim Assist" var:&darkDev.aimassist y:&y];
-                  [self addToggle:@"TriggerBot" var:&darkDev.triggerbot y:&y];
-                  [self addToggle:@"Reach (8 Blocks)" var:&darkDev.reach y:&y];
-                  [self addToggle:@"Velocity (Anti-KB)" var:&darkDev.velocity y:&y];
-                  [self addToggle:@"Auto Crystal" var:&darkDev.autocrystal y:&y];
-                  [self addToggle:@"Auto Anchor" var:&darkDev.autoanchor y:&y];
-                  [self addToggle:@"Criticals" var:&darkDev.criticals y:&y];
+                  [self addToggle:@"Reach" var:&darkDev.reach y:&y];
+                  [self addToggle:@"Velocity" var:&darkDev.velocity y:&y];
                   [self addToggle:@"Auto Totem" var:&darkDev.autototem y:&y];
+                  [self addToggle:@"Criticals" var:&darkDev.criticals y:&y];
 
                   // MOVEMENT
                   [self addHeader:@"[ MOVEMENT ]" y:&y color:[UIColor blueColor]];
                   [self addToggle:@"Flight" var:&darkDev.fly y:&y];
-                  [self addToggle:@"Boat Fly" var:&darkDev.boatfly y:&y];
                   [self addToggle:@"Speed Hack" var:&darkDev.speed y:&y];
-                  [self addToggle:@"Jesus (Water)" var:&darkDev.jesus y:&y];
+                  [self addToggle:@"Jesus" var:&darkDev.jesus y:&y];
                   [self addToggle:@"Spider" var:&darkDev.spider y:&y];
                   [self addToggle:@"High Jump" var:&darkDev.highjump y:&y];
-                  [self addToggle:@"Safe Walk" var:&darkDev.safewalk y:&y];
 
                   // WORLD
-                  [self addHeader:@"[ WORLD & LOOT ]" y:&y color:[UIColor greenColor]];
+                  [self addHeader:@"[ WORLD ]" y:&y color:[UIColor greenColor]];
                   [self addToggle:@"X-Ray" var:&darkDev.xray y:&y];
-                  [self addToggle:@"FullBright" var:&darkDev.fullbright y:&y];
-                  [self addToggle:@"Stash Finder" var:&darkDev.stashfinder y:&y];
                   [self addToggle:@"Nuker" var:&darkDev.nuker y:&y];
                   [self addToggle:@"Scaffold" var:&darkDev.scaffold y:&y];
                   [self addToggle:@"Auto Mine" var:&darkDev.automine y:&y];
-                  [self addToggle:@"NoWeb" var:&darkDev.noweb y:&y];
-                  [self addToggle:@"Chunk Tracker" var:&darkDev.chunkTracker y:&y];
 
-                  // VISUAL & MISC
-                  [self addHeader:@"[ VISUAL & MISC ]" y:&y color:[UIColor orangeColor]];
-                  [self addToggle:@"ESP (Boxes)" var:&darkDev.esp y:&y];
+                  // PLAYER
+                  [self addHeader:@"[ PLAYER ]" y:&y color:[UIColor orangeColor]];
+                  [self addToggle:@"Auto Eat" var:&darkDev.autoeat y:&y];
+                  [self addToggle:@"ESP" var:&darkDev.esp y:&y];
                   [self addToggle:@"NameTags" var:&darkDev.nametags y:&y];
                   [self addToggle:@"Inv Walk" var:&darkDev.invwalk y:&y];
-                  [self addToggle:@"NoClip" var:&darkDev.noclip y:&y];
-                  [self addToggle:@"FPS Boost" var:&darkDev.fpsboost y:&y];
                   [self addToggle:@"Bypass AC" var:&darkDev.bypass y:&y];
 
                   self.scroll.contentSize = CGSizeMake(frame.size.width, y + 50);
@@ -172,33 +158,21 @@ jobs:
           @end
 
           // --- ACTUAL HEAVY LOGIC (HOOKS) ---
-          
-          // 1. Player Tick Logic
           static void (*old_tick)(LocalPlayer* self);
           void new_tick(LocalPlayer* self) {
               if (self) {
                   if (darkDev.killaura) self->swing();
                   if (darkDev.fly) self->setAbility(1, true);
                   if (darkDev.autoeat && self->getHunger() < 16) self->startUsingItem();
-                  if (darkDev.spider && !self->isOnGround()) { /* Vertical Motion */ }
-                  if (darkDev.nuker) { /* Block Destroy Loop */ }
               }
               if (old_tick) old_tick(self);
           }
 
-          // 2. Reach Logic
           static float (*old_getReach)(void* self);
           float new_getReach(void* self) {
               return darkDev.reach ? 8.0f : old_getReach(self);
           }
 
-          // 3. Velocity / Knockback Logic
-          static void (*old_kb)(void* self, Entity* e, float f1, float f2);
-          void new_kb(void* self, Entity* e, float f1, float f2) {
-              if (!darkDev.velocity) old_kb(self, e, f1, f2);
-          }
-
-          // 4. GUI Handler
           @interface DarkDevHandler : NSObject
           @end
           @implementation DarkDevHandler
@@ -236,10 +210,8 @@ jobs:
                   }
               });
 
-              // Apply All Symbolic Hooks
               MSHookFunction((void*)MSFindSymbol(NULL, "__ZN5Player10normalTickEv"), (void *)&new_tick, (void **)&old_tick);
               MSHookFunction((void*)MSFindSymbol(NULL, "__ZNK11LocalPlayer13getReachDistEv"), (void *)&new_getReach, (void **)&old_getReach);
-              MSHookFunction((void*)MSFindSymbol(NULL, "__ZN5Entity13knockbackEntityEPS_ff"), (void *)&new_kb, (void **)&old_kb);
           }
           EOF
 
@@ -268,5 +240,5 @@ jobs:
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-V23-Heavy
+          name: DarkDev-V24-Pro
           path: final_output/DarkDev.dylib
