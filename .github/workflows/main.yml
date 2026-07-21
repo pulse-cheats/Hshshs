@@ -35,7 +35,7 @@ jobs:
           Author: Sotiris
           EOF
 
-          # 3. Tweak.xm (Fixed Syntax & Scope)
+          # 3. Tweak.xm
           cat <<'EOF' > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
@@ -110,10 +110,8 @@ jobs:
           static DarkDevGUI *menu;
           void tglM() { if(menu) menu.hidden = !menu.hidden; }
 
-          // Forward declaration for the hook function
           static void new_tick(LocalPlayer* self);
           static void (*old_tick)(LocalPlayer*);
-
           static void new_tick(LocalPlayer* self) {
               if (darkDev.killaura) { self->swing(); }
               if (old_tick) old_tick(self);
@@ -142,10 +140,14 @@ jobs:
                       [win addSubview:menu];
                   }
               });
-              // Initializing with a dummy address to allow compilation
               MSHookFunction((void*)0x1234567, (void *)&new_tick, (void **)&old_tick);
           }
           EOF
+
+      - name: Setup Dependencies
+        run: |
+          # Εγκατάσταση ldid για να μην βγάζει Error 127
+          brew install ldid
 
       - name: Setup Theos & SDK
         run: |
@@ -161,12 +163,12 @@ jobs:
           
       - name: Extract & Upload Dylib
         run: |
-          mkdir -p output
-          find . -name "*.dylib" -print -exec cp {} output/ \;
-          ls -R output
-      
+          mkdir -p final_output
+          find . -name "*.dylib" -exec cp {} final_output/DarkDev.dylib \;
+          ls -l final_output/DarkDev.dylib
+
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Dylib-Ready
-          path: output/
+          name: DarkDev-Dylib
+          path: final_output/DarkDev.dylib
