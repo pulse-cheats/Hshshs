@@ -1,4 +1,4 @@
-name: Build DarkDev Client
+name: DarkDev Ultimate Builder
 on: [push, pull_request]
 
 jobs:
@@ -8,20 +8,172 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Theos
+      - name: Generate DarkDev Source
         run: |
-          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          # 1. Makefile
+          cat <<EOF > Makefile
+          DEBUG = 0
+          FINALPACKAGE = 1
+          TARGET = iphone:clang:latest:14.0
+          include \$(THEOS)/makefiles/common.mk
+          TWEAK_NAME = DarkDev
+          DarkDev_FILES = tweak.mm
+          DarkDev_CFLAGS = -fobjc-arc -std=c++11
+          DarkDev_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore
+          include \$(THEOS_MAKE_PATH)/tweak.mk
+          EOF
+
+          # 2. Control file
+          cat <<EOF > control
+          Package: app.darkdev.client
+          Name: DarkDev Client
+          Version: 1.0.0
+          Architecture: iphoneos-arm
+          Description: 12-Module Utility for Minecraft Bedrock
+          Maintainer: Sotiris
+          Author: Sotiris
+          EOF
+
+          # 3. The Big Tweak.mm (12 Modules + GUI)
+          cat <<EOF > tweak.mm
+          #import <UIKit/UIKit.h>
+          #import <substrate.h>
+          #import <vector>
+
+          // --- DECLARATIONS ---
+          class Entity;
+          class LocalPlayer {
+          public:
+              void swing();
+              void attack(Entity*);
+              void setMotionY(float);
+              float getFallDistance();
+              int getHunger();
+              void startUsingItem();
+              float distanceTo(Entity*);
+              void* getLevel();
+          };
+
+          // --- 12 MODULE SETTINGS ---
+          struct {
+              bool killaura = false, fly = false, freecam = false;
+              bool esp = false, spawnerLines = false, blockLines = false;
+              bool speed = false, autocrystal = false, autoanchor = false;
+              bool autototem = false, criticals = false, autoeat = false;
+          } darkDev;
+
+          // --- PROFESSIONAL SCROLLABLE GUI ---
+          @interface DarkDevGUI : UIView
+          @property (nonatomic, strong) UIScrollView *scroll;
+          @end
+
+          @implementation DarkDevGUI
+          - (instancetype)initWithFrame:(CGRect)frame {
+              self = [super initWithFrame:frame];
+              if (self) {
+                  self.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.95];
+                  self.layer.borderColor = [UIColor redColor].CGColor;
+                  self.layer.borderWidth = 2;
+                  self.layer.cornerRadius = 15;
+                  
+                  UILabel *header = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, 40)];
+                  header.text = @"DARKDEV CLIENT v1.0";
+                  header.textColor = [UIColor whiteColor];
+                  header.textAlignment = NSTextAlignmentCenter;
+                  header.backgroundColor = [UIColor redColor];
+                  [self addSubview:header];
+
+                  self.scroll = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 40, frame.size.width, frame.size.height - 40)];
+                  [self addSubview:self.scroll];
+
+                  int y = 10;
+                  [self addTgl:@"KillAura" var:&darkDev.killaura y:&y];
+                  [self addTgl:@"Flight" var:&darkDev.fly y:&y];
+                  [self addTgl:@"Speed" var:&darkDev.speed y:&y];
+                  [self addTgl:@"Player ESP" var:&darkDev.esp y:&y];
+                  [self addTgl:@"Spawner Tracers" var:&darkDev.spawnerLines y:&y];
+                  [self addTgl:@"Block Tracers" var:&darkDev.blockLines y:&y];
+                  [self addTgl:@"Auto Totem" var:&darkDev.autototem y:&y];
+                  [self addTgl:@"Auto Crystal" var:&darkDev.autocrystal y:&y];
+                  [self addTgl:@"Auto Anchor" var:&darkDev.autoanchor y:&y];
+                  [self addTgl:@"Criticals" var:&darkDev.criticals y:&y];
+                  [self addTgl:@"Auto Eat" var:&darkDev.autoeat y:&y];
+                  [self addTgl:@"FreeCam" var:&darkDev.freecam y:&y];
+
+                  self.scroll.contentSize = CGSizeMake(frame.size.width, y + 20);
+              }
+              return self;
+          }
+
+          - (void)addTgl:(NSString *)n var:(bool *)v y:(int *)y {
+              UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(15, *y, 130, 30)];
+              l.text = n; l.textColor = [UIColor whiteColor]; [self.scroll addSubview:l];
+              UISwitch *s = [[UISwitch alloc] initWithFrame:CGRectMake(150, *y, 0, 0)];
+              s.onTintColor = [UIColor redColor];
+              [s addTarget:self action:@selector(sw:) forControlEvents:UIControlEventValueChanged];
+              objc_setAssociatedObject(s, "p", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+              [self.scroll addSubview:s];
+              *y += 45;
+          }
+
+          - (void)sw:(UISwitch *)s {
+              bool *v = (bool *)[[objc_getAssociatedObject(s, "p") pointerValue] pointerValue];
+              *v = s.on;
+          }
+          @end
+
+          static DarkDevGUI *menu;
+
+          // --- HOOKS ---
+          void (*old_tick)(LocalPlayer*);
+          void new_tick(LocalPlayer* self) {
+              if (darkDev.killaura) { self->swing(); }
+              if (darkDev.criticals && self->getFallDistance() == 0) self->setMotionY(0.12f);
+              if (darkDev.autoeat && self->getHunger() < 16) self->startUsingItem();
+              old_tick(self);
+          }
+
+          // --- INJECTION ---
+          %ctor {
+              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                  UIWindow *win = [UIApplication sharedApplication].keyWindow;
+                  
+                  UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+                  btn.frame = CGRectMake(20, 100, 60, 60);
+                  btn.backgroundColor = [UIColor redColor];
+                  btn.layer.cornerRadius = 30;
+                  [btn setTitle:@"DD" forState:UIControlStateNormal];
+                  [btn addTarget:nil action:@selector(tglM) forControlEvents:UIControlEventTouchUpInside];
+                  [win addSubview:btn];
+
+                  menu = [[DarkDevGUI alloc] initWithFrame:CGRectMake(win.frame.size.width/2-110, win.frame.size.height/2-150, 220, 300)];
+                  menu.hidden = YES;
+                  [win addSubview:menu];
+              });
+              MSHookFunction(NULL, (void *)&new_tick, (void **)&old_tick);
+          }
+          void tglM() { if(menu) menu.hidden = !menu.hidden; }
+          EOF
+
+      - name: Setup Theos & SDK
+        run: |
+          git clone --recursive https://github.com/theos/theos.git ~/theos
+          curl -LO https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS14.5.sdk.tar.xz
+          mkdir -p ~/theos/sdks
+          tar -xf iPhoneOS14.5.sdk.tar.xz -C ~/theos/sdks
           
-      - name: Build DarkDev Dylib
+      - name: Build DarkDev
         run: |
           export THEOS=~/theos
-          export SDKVERSION=latest
           make package
           
-      - name: Upload DarkDev Artifact
+      - name: Extract & Upload Dylib
+        run: |
+          mkdir -p output
+          find .theos/obj -name "*.dylib" -exec cp {} output/ \;
+      
+      - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Dylib
-          path: packages/*.deb
+          name: DarkDev-Dylib-Full-V1
+          path: output/*.dylib
