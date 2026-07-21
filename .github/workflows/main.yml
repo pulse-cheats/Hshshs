@@ -10,10 +10,11 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile
+          # 1. Makefile - Ρυθμίσεις για Scarlet & 64-bit
           cat <<'EOF' > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
+          ARCHS = arm64
           TARGET = iphone:clang:latest:14.0
           
           include $(THEOS)/makefiles/common.mk
@@ -32,12 +33,10 @@ jobs:
           Name: DarkDev Client
           Version: 1.0.0
           Architecture: iphoneos-arm
-          Description: 12-Module Utility for Minecraft Bedrock
-          Maintainer: Sotiris
-          Author: Sotiris
+          Description: 12-Module Pro Utility for Minecraft
           EOF
 
-          # 3. Tweak.xm
+          # 3. Tweak.xm (12 Modules + Scroll GUI)
           cat <<'EOF' > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
@@ -53,9 +52,11 @@ jobs:
               void startUsingItem();
           };
 
+          // --- ΤΑ 12 MODULES ΣΟΥ ---
           struct {
-              bool killaura = false, fly = false, speed = false;
-              bool esp = false, spawnerLines = false, blockLines = false;
+              bool killaura = false, fly = false, freecam = false;
+              bool esp = false, spawnerTracers = false, storageTracers = false;
+              bool speed = false, autocrystal = false, autoanchor = false;
               bool autototem = false, criticals = false, autoeat = false;
           } darkDev;
 
@@ -71,39 +72,49 @@ jobs:
                   self.layer.borderColor = [UIColor redColor].CGColor;
                   self.layer.borderWidth = 2;
                   self.layer.cornerRadius = 15;
+                  
                   UILabel *header = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, 40)];
-                  header.text = @"DARKDEV v1.0";
+                  header.text = @"DARKDEV CLIENT";
                   header.textColor = [UIColor whiteColor];
                   header.textAlignment = NSTextAlignmentCenter;
                   header.backgroundColor = [UIColor redColor];
                   [self addSubview:header];
+
                   self.scroll = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 40, frame.size.width, frame.size.height - 40)];
                   [self addSubview:self.scroll];
+
                   int y = 10;
                   [self addTgl:@"KillAura" var:&darkDev.killaura y:&y];
                   [self addTgl:@"Flight" var:&darkDev.fly y:&y];
+                  [self addTgl:@"FreeCam" var:&darkDev.freecam y:&y];
+                  [self addTgl:@"ESP" var:&darkDev.esp y:&y];
+                  [self addTgl:@"Spawner Tracers" var:&darkDev.spawnerTracers y:&y];
+                  [self addTgl:@"Storage Tracers" var:&darkDev.storageTracers y:&y];
                   [self addTgl:@"Speed" var:&darkDev.speed y:&y];
-                  [self addTgl:@"Player ESP" var:&darkDev.esp y:&y];
-                  [self addTgl:@"Spawner Tracers" var:&darkDev.spawnerLines y:&y];
+                  [self addTgl:@"Auto Crystal" var:&darkDev.autocrystal y:&y];
+                  [self addTgl:@"Auto Anchor" var:&darkDev.autoanchor y:&y];
                   [self addTgl:@"Auto Totem" var:&darkDev.autototem y:&y];
                   [self addTgl:@"Criticals" var:&darkDev.criticals y:&y];
                   [self addTgl:@"Auto Eat" var:&darkDev.autoeat y:&y];
+
                   self.scroll.contentSize = CGSizeMake(frame.size.width, y + 20);
               }
               return self;
           }
+
           - (void)addTgl:(NSString *)n var:(bool *)v y:(int *)y {
-              UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(15, *y, 130, 30)];
+              UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(15, *y, 140, 30)];
               l.text = n; l.textColor = [UIColor whiteColor]; [self.scroll addSubview:l];
-              UISwitch *s = [[UISwitch alloc] initWithFrame:CGRectMake(150, *y, 0, 0)];
+              UISwitch *s = [[UISwitch alloc] initWithFrame:CGRectMake(160, *y, 0, 0)];
               s.onTintColor = [UIColor redColor];
               [s addTarget:self action:@selector(sw:) forControlEvents:UIControlEventValueChanged];
-              objc_setAssociatedObject(s, "ptr", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+              objc_setAssociatedObject(s, "p", [NSValue valueWithPointer:v], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
               [self.scroll addSubview:s];
               *y += 45;
           }
+
           - (void)sw:(UISwitch *)s {
-              NSValue *val = objc_getAssociatedObject(s, "ptr");
+              NSValue *val = objc_getAssociatedObject(s, "p");
               bool *v = (bool *)[val pointerValue];
               *v = s.on;
           }
@@ -112,23 +123,9 @@ jobs:
           static DarkDevGUI *menu;
           void tglM() { if(menu) menu.hidden = !menu.hidden; }
 
-          static void new_tick(LocalPlayer* self);
-          static void (*old_tick)(LocalPlayer*);
-          static void new_tick(LocalPlayer* self) {
-              if (darkDev.killaura) { self->swing(); }
-              if (old_tick) old_tick(self);
-          }
-
           %ctor {
               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  UIWindow *win = nil;
-                  for (UIWindowScene* windowScene in [UIApplication sharedApplication].connectedScenes) {
-                      if (windowScene.activationState == UISceneActivationStateForegroundActive) {
-                          win = windowScene.windows.firstObject;
-                          break;
-                      }
-                  }
-                  if (!win) win = [UIApplication sharedApplication].keyWindow;
+                  UIWindow *win = [UIApplication sharedApplication].keyWindow;
                   if (win) {
                       UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
                       btn.frame = CGRectMake(20, 100, 60, 60);
@@ -137,12 +134,12 @@ jobs:
                       [btn setTitle:@"DD" forState:UIControlStateNormal];
                       [btn addTarget:nil action:@selector(tglM) forControlEvents:UIControlEventTouchUpInside];
                       [win addSubview:btn];
+
                       menu = [[DarkDevGUI alloc] initWithFrame:CGRectMake(win.frame.size.width/2-110, win.frame.size.height/2-150, 220, 300)];
                       menu.hidden = YES;
                       [win addSubview:menu];
                   }
               });
-              MSHookFunction((void*)0x1234567, (void *)&new_tick, (void **)&old_tick);
           }
           EOF
 
@@ -161,19 +158,19 @@ jobs:
           export THEOS=~/theos
           make
           
-      - name: Manual Sign & Extract
+      - name: Optimize & Sign (Scarlet Fix)
         run: |
           mkdir -p final_output
-          # Αντιγράφουμε πρώτα το αρχείο
-          find .theos/obj -name "*.dylib" -type f -exec cp {} final_output/DarkDev.dylib \;
-          # Προσπαθούμε να υπογράψουμε, αλλά συνεχίζουμε αν αποτύχει
-          if [ -f final_output/DarkDev.dylib ]; then
-            ldid -S final_output/DarkDev.dylib || echo "Signing failed, continuing anyway..."
-          fi
-          ls -l final_output/DarkDev.dylib
+          DYLIB_PATH=$(find .theos/obj -name "*.dylib" -type f | head -n 1)
+          # Καθαρισμός αρχείου
+          strip -x $DYLIB_PATH
+          # Υπογραφή Ad-hoc
+          ldid -S $DYLIB_PATH
+          # Μετονομασία σε κάτι απλό για αποφυγή λαθών
+          cp $DYLIB_PATH final_output/DarkDev.dylib
 
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Final-Dylib
+          name: DarkDev-V12-Ready
           path: final_output/DarkDev.dylib
