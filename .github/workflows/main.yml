@@ -134,13 +134,13 @@ jobs:
           }
           EOF
 
-      - name: Setup Theos (Light)
+      - name: Setup Dependencies
+        run: brew install ldid xz
+
+      - name: Setup Theos (Optimized)
         run: |
-          # Χρήση depth 1 για γρήγορο κατέβασμα χωρίς submodules
-          git clone --depth 1 https://github.com/theos/theos.git ~/theos
-          # Κατέβασμα μόνο των απαραίτητων headers
-          mkdir -p ~/theos/vendor/include
-          git clone --depth 1 https://github.com/theos/headers.git ~/theos/vendor/include
+          # Χρήση recursive αλλά με depth 1 για να κατέβουν όλα τα σωστά submodules
+          git clone --recursive --depth 1 https://github.com/theos/theos.git ~/theos
           # Κατέβασμα του SDK
           curl -LO https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS14.5.sdk.tar.xz
           mkdir -p ~/theos/sdks
@@ -155,6 +155,8 @@ jobs:
         run: |
           mkdir -p final_output
           DYLIB_PATH=$(find .theos/obj -name "*.dylib" -type f | head -n 1)
+          # Υπογραφή Ad-hoc
+          ldid -S $DYLIB_PATH
           cp $DYLIB_PATH final_output/DarkDev.dylib
           
       - name: Final Artifact
