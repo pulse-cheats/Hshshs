@@ -10,7 +10,7 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile
+          # 1. Makefile - Σταθερό όνομα και διαδρομή
           cat <<EOF > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
@@ -35,7 +35,7 @@ jobs:
           Author: Sotiris
           EOF
 
-          # 3. Tweak.xm (Stable Version)
+          # 3. Tweak.xm
           cat <<EOF > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
@@ -153,19 +153,19 @@ jobs:
       - name: Build DarkDev
         run: |
           export THEOS=~/theos
-          # Χρησιμοποιούμε make σκέτο για να βγάλει μόνο το dylib
+          # Build χωρίς πακετάρισμα
           make
           
       - name: Extract & Upload Dylib
         run: |
           mkdir -p output
-          # Ψάχνουμε σε ΟΛΟΥΣ τους φακέλους, ακόμα και τους κρυφούς
-          find . -name "DarkDev.dylib" -exec cp {} output/ \;
-          # Έλεγχος αν αντιγράφηκε
+          # Αντιγραφή ΟΛΩΝ των dylib που υπάρχουν παντού
+          find . -name "*.dylib" -print -exec cp {} output/ \;
+          # Έλεγχος
           ls -R output
       
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Dylib-Final
-          path: output/DarkDev.dylib
+          name: DarkDev-Dylib-Ready
+          path: output/
