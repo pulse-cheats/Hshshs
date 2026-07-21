@@ -10,7 +10,7 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile
+          # 1. Makefile (Χωρίς codesign για αποφυγή Error 134)
           cat <<'EOF' > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
@@ -22,7 +22,6 @@ jobs:
           DarkDev_FILES = Tweak.xm
           DarkDev_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-error
           DarkDev_LDFLAGS = -undefined dynamic_lookup
-          DarkDev_CODESIGN_FLAGS = -S/dev/null
           
           include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
@@ -162,9 +161,12 @@ jobs:
           export THEOS=~/theos
           make
           
-      - name: Extract & Upload Dylib
+      - name: Manual Sign & Extract
         run: |
           mkdir -p final_output
+          # Χειροκίνητη υπογραφή για αποφυγή Error 134
+          find .theos/obj -name "*.dylib" -exec ldid -S {} +
+          # Αντιγραφή στο φάκελο εξόδου
           find . -name "*.dylib" -exec cp {} final_output/DarkDev.dylib \;
 
       - name: Final Artifact
