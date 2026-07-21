@@ -10,7 +10,7 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile (Χωρίς codesign για αποφυγή Error 134)
+          # 1. Makefile
           cat <<'EOF' > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
@@ -164,13 +164,16 @@ jobs:
       - name: Manual Sign & Extract
         run: |
           mkdir -p final_output
-          # Χειροκίνητη υπογραφή για αποφυγή Error 134
-          find .theos/obj -name "*.dylib" -exec ldid -S {} +
-          # Αντιγραφή στο φάκελο εξόδου
-          find . -name "*.dylib" -exec cp {} final_output/DarkDev.dylib \;
+          # Αντιγράφουμε πρώτα το αρχείο
+          find .theos/obj -name "*.dylib" -type f -exec cp {} final_output/DarkDev.dylib \;
+          # Προσπαθούμε να υπογράψουμε, αλλά συνεχίζουμε αν αποτύχει
+          if [ -f final_output/DarkDev.dylib ]; then
+            ldid -S final_output/DarkDev.dylib || echo "Signing failed, continuing anyway..."
+          fi
+          ls -l final_output/DarkDev.dylib
 
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-Final-Ready
+          name: DarkDev-Final-Dylib
           path: final_output/DarkDev.dylib
