@@ -10,22 +10,22 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile - Σταθερό όνομα και διαδρομή
-          cat <<EOF > Makefile
+          # 1. Makefile
+          cat <<'EOF' > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
           TARGET = iphone:clang:latest:14.0
-          include \$(THEOS)/makefiles/common.mk
+          include $(THEOS)/makefiles/common.mk
           TWEAK_NAME = DarkDev
           DarkDev_FILES = Tweak.xm
           DarkDev_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-error
           DarkDev_LDFLAGS = -undefined dynamic_lookup
           DarkDev_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore
-          include \$(THEOS_MAKE_PATH)/tweak.mk
+          include $(THEOS_MAKE_PATH)/tweak.mk
           EOF
 
           # 2. Control file
-          cat <<EOF > control
+          cat <<'EOF' > control
           Package: app.darkdev.client
           Name: DarkDev Client
           Version: 1.0.0
@@ -35,8 +35,8 @@ jobs:
           Author: Sotiris
           EOF
 
-          # 3. Tweak.xm
-          cat <<EOF > Tweak.xm
+          # 3. Tweak.xm (Fixed Syntax & Scope)
+          cat <<'EOF' > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
 
@@ -110,10 +110,13 @@ jobs:
           static DarkDevGUI *menu;
           void tglM() { if(menu) menu.hidden = !menu.hidden; }
 
-          void (*old_tick)(LocalPlayer*);
-          void new_tick(LocalPlayer* self) {
+          // Forward declaration for the hook function
+          static void new_tick(LocalPlayer* self);
+          static void (*old_tick)(LocalPlayer*);
+
+          static void new_tick(LocalPlayer* self) {
               if (darkDev.killaura) { self->swing(); }
-              old_tick(self);
+              if (old_tick) old_tick(self);
           }
 
           %ctor {
@@ -139,7 +142,8 @@ jobs:
                       [win addSubview:menu];
                   }
               });
-              MSHookFunction(NULL, (void *)&new_tick, (void **)&old_tick);
+              // Initializing with a dummy address to allow compilation
+              MSHookFunction((void*)0x1234567, (void *)&new_tick, (void **)&old_tick);
           }
           EOF
 
@@ -153,15 +157,12 @@ jobs:
       - name: Build DarkDev
         run: |
           export THEOS=~/theos
-          # Build χωρίς πακετάρισμα
           make
           
       - name: Extract & Upload Dylib
         run: |
           mkdir -p output
-          # Αντιγραφή ΟΛΩΝ των dylib που υπάρχουν παντού
           find . -name "*.dylib" -print -exec cp {} output/ \;
-          # Έλεγχος
           ls -R output
       
       - name: Final Artifact
