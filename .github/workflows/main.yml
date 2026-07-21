@@ -35,18 +35,16 @@ jobs:
           Description: Fixed 12-Module Pro Utility for Minecraft
           EOF
 
-          # 3. Tweak.xm (Fixed Button Click & Window Logic)
+          # 3. Tweak.xm (Fixed Button & GUI)
           cat <<'EOF' > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
           #import <objc/runtime.h>
 
-          // --- FORWARD DECLARATIONS ---
           @interface DarkDevGUI : UIView
           @property (nonatomic, strong) UIScrollView *scroll;
           @end
 
-          // --- GLOBAL SETTINGS ---
           struct {
               bool killaura = false, fly = false, freecam = false, esp = false;
               bool spawnerLines = false, storageLines = false, speed = false;
@@ -54,7 +52,6 @@ jobs:
               bool criticals = false, autoeat = false;
           } darkDev;
 
-          // --- GUI IMPLEMENTATION ---
           @implementation DarkDevGUI
           - (instancetype)initWithFrame:(CGRect)frame {
               self = [super initWithFrame:frame];
@@ -63,21 +60,15 @@ jobs:
                   self.layer.borderColor = [UIColor redColor].CGColor;
                   self.layer.borderWidth = 2;
                   self.layer.cornerRadius = 15;
-                  
-                  UILabel *header = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, 40)];
-                  header.text = @"DARKDEV v1.1";
-                  header.textColor = [UIColor whiteColor];
-                  header.textAlignment = NSTextAlignmentCenter;
-                  header.backgroundColor = [UIColor redColor];
-                  [self addSubview:header];
-
-                  self.scroll = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 40, frame.size.width, frame.size.height - 40)];
+                  UILabel *h = [[UILabel alloc] initWithFrame:CGRectMake(0,0,frame.size.width,40)];
+                  h.text = @"DARKDEV v1.1"; h.textColor = [UIColor whiteColor];
+                  h.textAlignment = NSTextAlignmentCenter; h.backgroundColor = [UIColor redColor];
+                  [self addSubview:h];
+                  self.scroll = [[UIScrollView alloc] initWithFrame:CGRectMake(0,40,frame.size.width,frame.size.height-40)];
                   [self addSubview:self.scroll];
-
                   int y = 10;
                   NSArray *mods = @[@"KillAura", @"Flight", @"FreeCam", @"ESP", @"Spawner Tracers", @"Storage Tracers", @"Speed", @"Auto Crystal", @"Auto Anchor", @"Auto Totem", @"Criticals", @"Auto Eat"];
                   bool *vars[] = {&darkDev.killaura, &darkDev.fly, &darkDev.freecam, &darkDev.esp, &darkDev.spawnerLines, &darkDev.storageLines, &darkDev.speed, &darkDev.autocrystal, &darkDev.autoanchor, &darkDev.autototem, &darkDev.criticals, &darkDev.autoeat};
-
                   for (int i = 0; i < mods.count; i++) {
                       UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(15, y, 140, 30)];
                       l.text = mods[i]; l.textColor = [UIColor whiteColor]; [self.scroll addSubview:l];
@@ -85,8 +76,7 @@ jobs:
                       s.onTintColor = [UIColor redColor];
                       objc_setAssociatedObject(s, "p", [NSValue valueWithPointer:vars[i]], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                       [s addTarget:self action:@selector(sw:) forControlEvents:UIControlEventValueChanged];
-                      [self.scroll addSubview:s];
-                      y += 45;
+                      [self.scroll addSubview:s]; y += 45;
                   }
                   self.scroll.contentSize = CGSizeMake(frame.size.width, y + 20);
               }
@@ -98,20 +88,19 @@ jobs:
           }
           @end
 
-          // --- BUTTON HANDLER ---
-          @interface DarkDevManager : NSObject
+          @interface DarkDevMgr : NSObject
           @property (nonatomic, strong) DarkDevGUI *menu;
           @property (nonatomic, strong) UIButton *btn;
           @end
 
-          @implementation DarkDevManager
-          - (void)tglM {
-              if (self.menu) {
-                  self.menu.hidden = !self.menu.hidden;
-                  if (!self.menu.hidden) [self.menu.superview bringSubviewToFront:self.menu];
-              }
+          @implementation DarkDevMgr
+          - (void)tgl { 
+              if(self.menu) { 
+                  self.menu.hidden = !self.menu.hidden; 
+                  if(!self.menu.hidden) [self.menu.superview bringSubviewToFront:self.menu];
+              } 
           }
-          - (void)drag:(UIPanGestureRecognizer *)p {
+          - (void)drg:(UIPanGestureRecognizer *)p {
               UIView *v = p.view;
               CGPoint loc = [p translationInView:v.superview];
               v.center = CGPointMake(v.center.x + loc.x, v.center.y + loc.y);
@@ -119,65 +108,57 @@ jobs:
           }
           @end
 
-          static DarkDevManager *mgr;
-
+          static DarkDevMgr *m;
           %ctor {
               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 6 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  UIWindow *win = nil;
-                  for (UIWindowScene* s in [UIApplication sharedApplication].connectedScenes) {
-                      if (s.activationState == UISceneActivationStateForegroundActive) { win = s.windows.firstObject; break; }
-                  }
-                  if (!win) win = [UIApplication sharedApplication].keyWindow;
-
-                  if (win) {
-                      mgr = [[DarkDevManager alloc] init];
-                      
-                      mgr.btn = [UIButton buttonWithType:UIButtonTypeCustom];
-                      mgr.btn.frame = CGRectMake(40, 120, 60, 60);
-                      mgr.btn.backgroundColor = [UIColor redColor];
-                      mgr.btn.layer.cornerRadius = 30;
-                      mgr.btn.layer.zPosition = 1000;
-                      [mgr.btn setTitle:@"DD" forState:UIControlStateNormal];
-                      [mgr.btn addTarget:mgr action:@selector(tglM) forControlEvents:UIControlEventTouchUpInside];
-                      
-                      UIPanGestureRecognizer *p = [[UIPanGestureRecognizer alloc] initWithTarget:mgr action:@selector(drag:)];
-                      [mgr.btn addGestureRecognizer:p];
-                      [win addSubview:mgr.btn];
-
-                      mgr.menu = [[DarkDevGUI alloc] initWithFrame:CGRectMake(win.frame.size.width/2-110, win.frame.size.height/2-150, 220, 320)];
-                      mgr.menu.hidden = YES;
-                      mgr.menu.layer.zPosition = 1001;
-                      [win addSubview:mgr.menu];
+                  UIWindow *w = [UIApplication sharedApplication].keyWindow;
+                  if(!w) w = [UIApplication sharedApplication].windows.firstObject;
+                  if(w) {
+                      m = [[DarkDevMgr alloc] init];
+                      m.btn = [UIButton buttonWithType:UIButtonTypeCustom];
+                      m.btn.frame = CGRectMake(40, 120, 60, 60);
+                      m.btn.backgroundColor = [UIColor redColor];
+                      m.btn.layer.cornerRadius = 30;
+                      m.btn.layer.zPosition = 9999;
+                      [m.btn setTitle:@"DD" forState:UIControlStateNormal];
+                      [m.btn addTarget:m action:@selector(tgl) forControlEvents:UIControlEventTouchUpInside];
+                      UIPanGestureRecognizer *p = [[UIPanGestureRecognizer alloc] initWithTarget:m action:@selector(drg:)];
+                      [m.btn addGestureRecognizer:p];
+                      [w addSubview:m.btn];
+                      m.menu = [[DarkDevGUI alloc] initWithFrame:CGRectMake(w.frame.size.width/2-110, w.frame.size.height/2-150, 220, 320)];
+                      m.menu.hidden = YES;
+                      m.menu.layer.zPosition = 10000;
+                      [w addSubview:m.menu];
                   }
               });
           }
           EOF
 
-      - name: Setup Dependencies
-        run: brew install ldid xz
-
-      - name: Setup Theos & SDK
+      - name: Setup Theos (Light)
         run: |
-          git clone --recursive https://github.com/theos/theos.git ~/theos
+          # Χρήση depth 1 για γρήγορο κατέβασμα χωρίς submodules
+          git clone --depth 1 https://github.com/theos/theos.git ~/theos
+          # Κατέβασμα μόνο των απαραίτητων headers
+          mkdir -p ~/theos/vendor/include
+          git clone --depth 1 https://github.com/theos/headers.git ~/theos/vendor/include
+          # Κατέβασμα του SDK
           curl -LO https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS14.5.sdk.tar.xz
           mkdir -p ~/theos/sdks
           tar -xf iPhoneOS14.5.sdk.tar.xz -C ~/theos/sdks
-          
+
       - name: Build DarkDev
         run: |
           export THEOS=~/theos
           make
           
-      - name: Optimize & Sign
+      - name: Optimize & Upload
         run: |
           mkdir -p final_output
           DYLIB_PATH=$(find .theos/obj -name "*.dylib" -type f | head -n 1)
-          strip -x $DYLIB_PATH
-          ldid -S $DYLIB_PATH
           cp $DYLIB_PATH final_output/DarkDev.dylib
-
+          
       - name: Final Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DarkDev-V13-Fixed
+          name: DarkDev-V13-Fixed-Final
           path: final_output/DarkDev.dylib
