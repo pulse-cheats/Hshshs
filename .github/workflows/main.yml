@@ -10,7 +10,7 @@ jobs:
 
       - name: Generate DarkDev Source
         run: |
-          # 1. Makefile
+          # 1. Makefile - Προσθήκη LDFLAGS για παράκαμψη των Undefined Symbols
           cat <<EOF > Makefile
           DEBUG = 0
           FINALPACKAGE = 1
@@ -19,6 +19,8 @@ jobs:
           TWEAK_NAME = DarkDev
           DarkDev_FILES = Tweak.xm
           DarkDev_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-error
+          # ΑΥΤΗ Η ΓΡΑΜΜΗ ΛΥΝΕΙ ΤΟ ERROR:
+          DarkDev_LDFLAGS = -undefined dynamic_lookup
           DarkDev_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore
           include \$(THEOS_MAKE_PATH)/tweak.mk
           EOF
@@ -34,7 +36,7 @@ jobs:
           Author: Sotiris
           EOF
 
-          # 3. Tweak.xm (Fixed Window Logic)
+          # 3. Tweak.xm
           cat <<EOF > Tweak.xm
           #import <UIKit/UIKit.h>
           #import <substrate.h>
@@ -157,7 +159,6 @@ jobs:
       - name: Extract & Upload Dylib
         run: |
           mkdir -p output
-          # Ψάχνουμε σε όλο το repository για το dylib
           find . -name "*.dylib" -exec cp {} output/ \;
       
       - name: Final Artifact
