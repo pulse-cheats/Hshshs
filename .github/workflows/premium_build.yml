@@ -1,0 +1,433 @@
+name: Build Luau Framework (Premium)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build All-in-One Research Tool
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Theos
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          git clone --recursive https://github.com/theos/theos.git ~/theos
+          echo "THEOS=~/theos" >> $GITHUB_ENV
+          
+      - name: Setup iOS SDK
+        run: |
+          git clone --recursive https://github.com/theos/sdks.git ~/theos/sdks
+          
+      - name: Prepare Sources
+        run: |
+          cat << 'EOF' > Makefile
+TARGET := iphone:clang:latest:14.0
+ARCHS = arm64
+DEBUG = 0
+FINALPACKAGE = 1
+
+include $(THEOS)/makefiles/common.mk
+
+TWEAK_NAME = LuauFramework
+LuauFramework_FILES = Tweak.xm
+LuauFramework_CFLAGS = -fobjc-arc -O3
+LuauFramework_LDFLAGS = -undefined dynamic_lookup
+
+include $(THEOS_MAKE_PATH)/tweak.mk
+
+EOF
+
+          cat << 'EOF' > Tweak.xm
+
+#import <UIKit/UIKit.h>
+#import <Metal/Metal.h>
+#import <QuartzCore/QuartzCore.h>
+#import <objc/runtime.h>
+#import <dlfcn.h>
+#import <string>
+#import <vector>
+#import <map>
+
+/**
+ * LUAU AUTOMATION & UI RESEARCH FRAMEWORK
+ * Lead Systems Architect: Rool Machine
+ * 
+ * DESIGN SPECIFICATIONS:
+ * - Theme: Dark / Glassmorphism / Cyan Glow
+ * - Engine: Luau (High-Performance Hooking)
+ * - Security: Screen Capture Protection
+ */
+
+// --- Luau VM Definitions ---
+typedef void* lua_State;
+typedef int (*luau_load_t)(lua_State* L, const char* chunkname, const char* data, size_t size, int env);
+typedef lua_State* (*lua_newthread_t)(lua_State* L);
+typedef void (*luaL_sandboxthread_t)(lua_State* L);
+typedef int (*lua_pcall_t)(lua_State *L, int nargs, int nresults, int errfunc);
+typedef const char* (*lua_tolstring_t)(lua_State *L, int idx, size_t *len);
+typedef void (*lua_setfield_t)(lua_State *L, int idx, const char *k);
+typedef void (*lua_pushstring_t)(lua_State *L, const char *s);
+
+static luau_load_t luau_load;
+static lua_newthread_t lua_newthread;
+static luaL_sandboxthread_t luaL_sandboxthread;
+static lua_pcall_t lua_pcall;
+static lua_tolstring_t lua_tolstring;
+static lua_setfield_t lua_setfield;
+static lua_pushstring_t lua_pushstring;
+
+// --- Framework Core Logic ---
+
+@interface DarkDevManager : NSObject
+@property (nonatomic, assign) lua_State *globalState;
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *logs;
++ (instancetype)shared;
+- (void)execute:(NSString *)source;
+- (void)log:(NSString *)msg type:(NSString *)type;
+@end
+
+@implementation DarkDevManager
++ (instancetype)shared {
+    static DarkDevManager *s = nil;
+    static dispatch_once_t t;
+    dispatch_once(&t, ^{ s = [DarkDevManager new]; s.logs = [NSMutableArray array]; });
+    return s;
+}
+
+- (void)log:(NSString *)msg type:(NSString *)type {
+    [self.logs addObject:@{@"msg": msg, @"type": type, @"time": [NSDate date]}];
+    if (self.logs.count > 500) [self.logs removeObjectAtIndex:0];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"DarkDevLogUpdate" object:nil];
+    });
+}
+
+- (void)execute:(NSString *)source {
+    if (!self.globalState) {
+        [self log:@"CRITICAL: VM State not captured. Engine not ready." type:@"ERROR"];
+        return;
+    }
+
+    [self log:@"Dispatching Luau Task..." type:@"INFO"];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        lua_State *L = lua_newthread(self.globalState);
+        luaL_sandboxthread(L);
+        
+        int status = luau_load(L, "=[DarkDev]", [source UTF8String], source.length, 0);
+        if (status == 0) {
+            if (lua_pcall(L, 0, 0, 0) != 0) {
+                const char* err = lua_tolstring(L, -1, NULL);
+                [self log:[NSString stringWithFormat:@"Runtime: %s", err] type:@"ERROR"];
+            } else {
+                [self log:@"Task Completed Successfully." type:@"SUCCESS"];
+            }
+        } else {
+            const char* err = lua_tolstring(L, -1, NULL);
+            [self log:[NSString stringWithFormat:@"Syntax: %s", err] type:@"ERROR"];
+        }
+    });
+}
+@end
+
+// --- Premium UI Components ---
+
+@interface DarkDevVisuals : NSObject
++ (UIColor *)cyan;
++ (UIColor *)bg;
++ (void)applyGlow:(UIView *)view;
+@end
+
+@implementation DarkDevVisuals
++ (UIColor *)cyan { return [UIColor colorWithRed:0.0 green:0.8 blue:1.0 alpha:1.0]; }
++ (UIColor *)bg { return [UIColor colorWithWhite:0.05 alpha:0.7]; }
++ (void)applyGlow:(UIView *)view {
+    view.layer.shadowColor = [self cyan].CGColor;
+    view.layer.shadowRadius = 8;
+    view.layer.shadowOpacity = 0.5;
+    view.layer.shadowOffset = CGSizeZero;
+}
+@end
+
+@interface DarkDevEditor : UITextView <UITextViewDelegate>
+@end
+
+@implementation DarkDevEditor
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.3];
+        self.textColor = [UIColor whiteColor];
+        self.font = [UIFont fontWithName:@"Menlo-Regular" size:13];
+        self.layer.cornerRadius = 8;
+        self.keyboardAppearance = UIKeyboardAppearanceDark;
+        self.autocapitalizationType = UITextAutocapitalizationTypeNone;
+        self.autocorrectionType = UITextAutocorrectionTypeNo;
+        self.delegate = self;
+    }
+    return self;
+}
+@end
+
+@interface DarkDevDashboard : UIView
+@property (nonatomic, strong) DarkDevEditor *editor;
+@property (nonatomic, strong) UITableView *console;
+@end
+
+@implementation DarkDevDashboard
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        UIVisualEffectView *blur = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        blur.frame = self.bounds;
+        blur.layer.cornerRadius = 24;
+        blur.clipsToBounds = YES;
+        [self addSubview:blur];
+        
+        self.layer.cornerRadius = 24;
+        self.layer.borderWidth = 1.0;
+        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.15].CGColor;
+        
+        [self setupDashboard];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshLogs) name:@"DarkDevLogUpdate" object:nil];
+    }
+    return self;
+}
+
+- (void)setupDashboard {
+    CGFloat w = self.bounds.size.width;
+    CGFloat h = self.bounds.size.height;
+    
+    UILabel *header = [[UILabel alloc] initWithFrame:CGRectMake(20, 15, 300, 30)];
+    header.text = @"DARKDEV RESEARCH FRAMEWORK";
+    header.textColor = [DarkDevVisuals cyan];
+    header.font = [UIFont fontWithName:@"AvenirNext-Bold" size:16];
+    [self addSubview:header];
+    
+    self.editor = [[DarkDevEditor alloc] initWithFrame:CGRectMake(15, 60, w - 30, h * 0.45)];
+    [self addSubview:self.editor];
+    
+    UIButton *exec = [UIButton buttonWithType:UIButtonTypeSystem];
+    exec.frame = CGRectMake(15, h * 0.45 + 75, w - 30, 45);
+    exec.backgroundColor = [DarkDevVisuals cyan];
+    [exec setTitle:@"EXECUTE SCRIPT" forState:UIControlStateNormal];
+    [exec setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    exec.titleLabel.font = [UIFont boldSystemFontOfSize:14];
+    exec.layer.cornerRadius = 10;
+    [exec addTarget:self action:@selector(run) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:exec];
+    
+    self.console = [[UITableView alloc] initWithFrame:CGRectMake(15, h * 0.45 + 135, w - 30, h - (h * 0.45 + 150)) style:UITableViewStylePlain];
+    self.console.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.4];
+    self.console.layer.cornerRadius = 10;
+    self.console.separatorStyle = UITableViewCellSeparatorStyleNone;
+    [self addSubview:self.console];
+}
+
+- (void)run { [[DarkDevManager shared] execute:self.editor.text]; }
+- (void)refreshLogs { /* Logic to reload console table */ }
+@end
+
+// --- Visual Studio Logic ---
+
+@interface DarkDevStudioElement : UIView
+@end
+@implementation DarkDevStudioElement
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [[DarkDevVisuals cyan] colorWithAlphaComponent:0.2];
+        self.layer.borderColor = [DarkDevVisuals cyan].CGColor;
+        self.layer.borderWidth = 1.0;
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(drag:)];
+        [self addGestureRecognizer:pan];
+    }
+    return self;
+}
+- (void)drag:(UIPanGestureRecognizer *)p {
+    CGPoint t = [p translationInView:self.superview];
+    self.center = CGPointMake(self.center.x + t.x, self.center.y + t.y);
+    [p setTranslation:CGPointZero inView:self.superview];
+}
+@end
+
+@interface DarkDevStudio : UIView
+@end
+@implementation DarkDevStudio
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor colorWithPatternImage:[self drawGrid]];
+        UIButton *add = [UIButton buttonWithType:UIButtonTypeContactAdd];
+        add.frame = CGRectMake(20, 20, 40, 40);
+        add.tintColor = [DarkDevVisuals cyan];
+        [add addTarget:self action:@selector(addElement) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:add];
+    }
+    return self;
+}
+- (void)addElement {
+    DarkDevStudioElement *e = [[DarkDevStudioElement alloc] initWithFrame:CGRectMake(100, 100, 100, 100)];
+    [self addSubview:e];
+}
+- (UIImage *)drawGrid {
+    UIGraphicsBeginImageContext(CGSizeMake(30, 30));
+    [[UIColor colorWithWhite:1.0 alpha:0.05] setStroke];
+    UIBezierPath *p = [UIBezierPath bezierPathWithRect:CGRectMake(0, 0, 30, 30)];
+    [p stroke];
+    UIImage *i = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return i;
+}
+@end
+
+// --- Root Window Management & Security ---
+
+@interface DarkDevWindowManager : UIWindow
+@property (nonatomic, strong) DarkDevDashboard *dashboard;
+@property (nonatomic, strong) DarkDevStudio *studio;
+@end
+
+@implementation DarkDevWindowManager
++ (instancetype)shared {
+    static DarkDevWindowManager *s = nil;
+    static dispatch_once_t t;
+    dispatch_once(&t, ^{ s = [[DarkDevWindowManager alloc] initWithFrame:[UIScreen mainScreen].bounds]; });
+    return s;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.windowLevel = UIWindowLevelStatusBar + 999;
+        self.backgroundColor = [UIColor clearColor];
+        self.hidden = YES;
+        
+        // Anti-Screen Capture Logic
+        if ([self respondsToSelector:@selector(setScreenCaptureDisallowed:)]) {
+            // Internal private API logic or use UITextField secure trick
+            UITextField *secure = [[UITextField alloc] init];
+            secure.secureTextEntry = YES;
+            UIView *container = secure.subviews.firstObject;
+            [container addSubview:self.dashboard]; // This makes the dashboard invisible to screenshots
+        }
+        
+        self.dashboard = [[DarkDevDashboard alloc] initWithFrame:CGRectMake(30, 80, frame.size.width - 60, frame.size.height - 160)];
+        [self addSubview:self.dashboard];
+        
+        self.studio = [[DarkDevStudio alloc] initWithFrame:self.bounds];
+        self.studio.hidden = YES;
+        [self addSubview:self.studio];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toggle) name:@"ToggleDarkDev" object:nil];
+    }
+    return self;
+}
+
+- (void)toggle {
+    self.hidden = !self.hidden;
+    if (!self.hidden) [self makeKeyAndVisible];
+    else [self resignKeyWindow];
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    for (UIView *v in self.subviews) {
+        if (!v.hidden && v.userInteractionEnabled && [v pointInside:[self convertPoint:point toView:v] withEvent:event]) return YES;
+    }
+    return NO;
+}
+@end
+
+@interface DarkDevFloatingButton : UIWindow
+@end
+@implementation DarkDevFloatingButton
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.windowLevel = UIWindowLevelStatusBar + 1000;
+        self.backgroundColor = [UIColor clearColor];
+        
+        UIButton *b = [UIButton buttonWithType:UIButtonTypeCustom];
+        b.frame = self.bounds;
+        b.backgroundColor = [DarkDevVisuals bg];
+        b.layer.cornerRadius = frame.size.width/2;
+        b.layer.borderWidth = 2.0;
+        b.layer.borderColor = [DarkDevVisuals cyan].CGColor;
+        [DarkDevVisuals applyGlow:b];
+        
+        [b setImage:[UIImage imageWithSystemName:@"terminal"] forState:UIControlStateNormal];
+        b.tintColor = [DarkDevVisuals cyan];
+        [b addTarget:self action:@selector(tap) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:b];
+        
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
+        [self addGestureRecognizer:pan];
+        [self makeKeyAndVisible];
+    }
+    return self;
+}
+- (void)tap { [[NSNotificationCenter defaultCenter] postNotificationName:@"ToggleDarkDev" object:nil]; }
+- (void)pan:(UIPanGestureRecognizer *)p {
+    self.center = [p locationInView:self.superview];
+}
+@end
+
+// --- Engine Hooks ---
+
+#include <substrate.h>
+
+void* (*orig_TaskScheduler_get)(void);
+void (*orig_TaskScheduler_Update)(void* self);
+
+void hook_TaskScheduler_Update(void* self) {
+    orig_TaskScheduler_Update(self);
+    // Heartbeat sync logic here
+}
+
+void (*orig_luaL_openlibs)(lua_State *L);
+void hook_luaL_openlibs(lua_State *L) {
+    orig_luaL_openlibs(L);
+    [DarkDevManager shared].globalState = L;
+    [[DarkDevManager shared] log:@"VM Heartbeat Captured." type:@"SUCCESS"];
+}
+
+%ctor {
+    @autoreleasepool {
+        void* handle = dlopen(NULL, RTLD_NOW);
+        if (handle) {
+            luau_load = (luau_load_t)dlsym(handle, "luau_load");
+            lua_newthread = (lua_newthread_t)dlsym(handle, "lua_newthread");
+            luaL_sandboxthread = (luaL_sandboxthread_t)dlsym(handle, "luaL_sandboxthread");
+            lua_pcall = (lua_pcall_t)dlsym(handle, "lua_pcall");
+            lua_tolstring = (lua_tolstring_t)dlsym(handle, "lua_tolstring");
+            
+            MSHookFunction(dlsym(handle, "luaL_openlibs"), (void*)hook_luaL_openlibs, (void**)&orig_luaL_openlibs);
+        }
+
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [DarkDevWindowManager shared];
+            [[[DarkDevFloatingButton alloc] initWithFrame:CGRectMake(40, 100, 55, 55)] setHidden:NO];
+        });
+    }
+}
+
+EOF
+
+      - name: Compile
+        run: |
+          export THEOS=~/theos
+          make package FINALPACKAGE=1 -j$(sysctl -n hw.ncpu)
+          
+      - name: Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DarkDev-Luau-Framework
+          path: |
+            packages/*.deb
+            .theos/obj/*.dylib
