@@ -1,0 +1,179 @@
+name: Build Luau Framework
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Self-Contained Premium Tweak
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Theos
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          git clone --recursive https://github.com/theos/theos.git ~/theos
+          echo "THEOS=~/theos" >> $GITHUB_ENV
+          
+      - name: Setup iOS SDK
+        run: |
+          git clone --recursive https://github.com/theos/sdks.git ~/theos/sdks
+          
+      - name: Generate Project Files
+        run: |
+          # Δημιουργία Makefile
+          cat << 'EOF' > Makefile
+          TARGET := iphone:clang:latest:14.0
+          ARCHS = arm64
+          DEBUG = 0
+          FINALPACKAGE = 1
+          include $(THEOS)/makefiles/common.mk
+          TWEAK_NAME = LuauFramework
+          LuauFramework_FILES = Tweak.xm
+          LuauFramework_CFLAGS = -fobjc-arc -O3
+          LuauFramework_LDFLAGS = -undefined dynamic_lookup
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          EOF
+          sed -i '' 's/^[[:space:]]\{1,10\}//' Makefile
+
+          # Δημιουργία Tweak.xm με το Premium Design
+          cat << 'EOF' > Tweak.xm
+          #import <UIKit/UIKit.h>
+          #import <Metal/Metal.h>
+          #import <QuartzCore/QuartzCore.h>
+          #import <objc/runtime.h>
+          #import <dlfcn.h>
+          #import <string>
+          #import <vector>
+
+          // --- Luau VM Signatures ---
+          typedef void* lua_State;
+          typedef int (*luau_load_t)(lua_State* L, const char* chunkname, const char* data, size_t size, int env);
+          typedef lua_State* (*lua_newthread_t)(lua_State* L);
+          typedef void (*luaL_sandboxthread_t)(lua_State* L);
+          typedef int (*lua_pcall_t)(lua_State *L, int nargs, int nresults, int errfunc);
+          typedef const char* (*lua_tolstring_t)(lua_State *L, int idx, size_t *len);
+
+          static luau_load_t luau_load;
+          static lua_newthread_t lua_newthread;
+          static luaL_sandboxthread_t luaL_sandboxthread;
+          static lua_pcall_t lua_pcall;
+          static lua_tolstring_t lua_tolstring;
+
+          // --- Premium Glassmorphism UI ---
+          @interface DarkDevUI : UIView
+          @property (nonatomic, strong) UITextView *editor;
+          @property (nonatomic, strong) UITextView *console;
+          @end
+
+          @implementation DarkDevUI
+          - (instancetype)initWithFrame:(CGRect)frame {
+              self = [super initWithFrame:frame];
+              if (self) {
+                  self.layer.cornerRadius = 20;
+                  self.layer.masksToBounds = YES;
+                  self.layer.borderWidth = 1.0;
+                  self.layer.borderColor = [UIColor colorWithRed:0.0 green:0.8 blue:1.0 alpha:0.3].CGColor;
+                  
+                  UIVisualEffectView *blur = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+                  blur.frame = self.bounds;
+                  [self addSubview:blur];
+
+                  UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(20, 15, 300, 25)];
+                  title.text = @"DARKDEV RESEARCH v2.0";
+                  title.textColor = [UIColor cyanColor];
+                  title.font = [UIFont boldSystemFontOfSize:16];
+                  [self addSubview:title];
+
+                  self.editor = [[UITextView alloc] initWithFrame:CGRectMake(15, 50, frame.size.width-30, frame.size.height*0.4)];
+                  self.editor.backgroundColor = [UIColor colorWithWhite:0 alpha:0.4];
+                  self.editor.textColor = [UIColor whiteColor];
+                  self.editor.font = [UIFont fontWithName:@"Menlo" size:12];
+                  self.editor.layer.cornerRadius = 10;
+                  [self addSubview:self.editor];
+
+                  UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
+                  btn.frame = CGRectMake(15, frame.size.height*0.4 + 65, frame.size.width-30, 45);
+                  btn.backgroundColor = [UIColor cyanColor];
+                  [btn setTitle:@"EXECUTE LUAU" forState:UIControlStateNormal];
+                  [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+                  btn.layer.cornerRadius = 10;
+                  [btn addTarget:self action:@selector(run) forControlEvents:UIControlEventTouchUpInside];
+                  [self addSubview:btn];
+
+                  self.console = [[UITextView alloc] initWithFrame:CGRectMake(15, frame.size.height*0.4 + 125, frame.size.width-30, frame.size.height*0.3)];
+                  self.console.backgroundColor = [UIColor blackColor];
+                  self.console.textColor = [UIColor greenColor];
+                  self.console.font = [UIFont fontWithName:@"Menlo" size:10];
+                  self.console.editable = NO;
+                  self.console.layer.cornerRadius = 10;
+                  [self addSubview:self.console];
+              }
+              return self;
+          }
+          - (void)run {
+              // Logic to call luau_load and pcall
+          }
+          @end
+
+          @interface DarkDevManager : UIWindow
+          @end
+          @implementation DarkDevManager
+          + (instancetype)shared {
+              static DarkDevManager *s = nil;
+              static dispatch_once_t t;
+              dispatch_once(&t, ^{ s = [[DarkDevManager alloc] initWithFrame:[UIScreen mainScreen].bounds]; });
+              return s;
+          }
+          - (instancetype)initWithFrame:(CGRect)frame {
+              self = [super initWithFrame:frame];
+              if (self) {
+                  self.windowLevel = UIWindowLevelStatusBar + 100;
+                  self.hidden = YES;
+                  DarkDevUI *ui = [[DarkDevUI alloc] initWithFrame:CGRectMake(40, 80, frame.size.width-80, frame.size.height-160)];
+                  [self addSubview:ui];
+              }
+              return self;
+          }
+          @end
+
+          // --- Engine Hooking ---
+          #include <substrate.h>
+
+          void (*orig_openlibs)(lua_State *L);
+          void hook_openlibs(lua_State *L) {
+              orig_openlibs(L);
+              // Capture State logic
+          }
+
+          %ctor {
+              void* handle = dlopen(NULL, RTLD_NOW);
+              if (handle) {
+                  luau_load = (luau_load_t)dlsym(handle, "luau_load");
+                  lua_newthread = (lua_newthread_t)dlsym(handle, "lua_newthread");
+                  lua_pcall = (lua_pcall_t)dlsym(handle, "lua_pcall");
+              }
+              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                  [[DarkDevManager shared] makeKeyAndVisible];
+              });
+          }
+          EOF
+          sed -i '' 's/^[[:space:]]\{1,10\}//' Tweak.xm
+
+      - name: Compile Tweak
+        run: |
+          export THEOS=~/theos
+          make package FINALPACKAGE=1 -j$(sysctl -n hw.ncpu)
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: LuauFramework-Release
+          path: |
+            packages/*.deb
+            .theos/obj/*.dylib
