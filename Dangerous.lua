@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - SKUSH MASTER v19.0
-    Lead Architect: Rool Machine
-    Fixes: UI Text Overlap, Tracers Restoration, Columns Alignment
+    DARKDEV GREEK RP - INJECTOR SUITE v20.0
+    Architect: Machine
+    Features: Injector Screen, Live Server Panel, Full Skush GUI
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -10,6 +10,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
+local Market = game:GetService("MarketplaceService")
 local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
@@ -17,32 +18,105 @@ local LP = Players.LocalPlayer
 -- --- CONFIG ---
 getgenv().Config = {
     Aimbot = false, SilentAim = false, KillAura = false,
-    ESP = false, Skeleton = true, Health = true, Distance = true, Tracers = true,
+    ESP = false, Skeleton = true, Health = true, Tracers = true, Distance = true,
     Fly = false, Noclip = false, SpeedActive = false, JumpActive = false, InfJump = false,
     Fullbright = false, NoFog = false, NoRecoil = false,
     FlySpeed = 50, FlyUp = false, FlyDown = false, Smooth = 0.1,
-    Target = nil
+    InjectTime = "Not Injected"
 }
 
--- --- UI ENGINE ---
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_Zenith_V19"
+SG.Name = "DarkDev_v20"
 
--- Floating Icon
-local OpenIcon = Instance.new("ImageButton", SG)
-OpenIcon.Size = UDim2.new(0, 45, 0, 45); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
-OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
-Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
-Instance.new("UIStroke", OpenIcon).Color = Color3.fromRGB(124, 77, 255)
+-- --- 1. SERVER STATUS PANEL (Top Left) ---
+local ServerPanel = Instance.new("Frame", SG)
+ServerPanel.Size = UDim2.new(0, 220, 0, 150)
+ServerPanel.Position = UDim2.new(0, 10, 0, 10)
+ServerPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+ServerPanel.BorderSizePixel = 0
+Instance.new("UICorner", ServerPanel)
+local SStroke = Instance.new("UIStroke", ServerPanel); SStroke.Color = Color3.fromRGB(124, 77, 255); SStroke.Thickness = 1.5
 
--- Main Menu
+local STitle = Instance.new("TextLabel", ServerPanel)
+STitle.Size = UDim2.new(1, 0, 0, 25)
+STitle.Text = "  SERVER & CLIENT INFO"
+STitle.TextColor3 = Color3.fromRGB(124, 77, 255)
+STitle.Font = Enum.Font.GothamBold
+STitle.TextSize = 11
+STitle.TextXAlignment = Enum.TextXAlignment.Left
+STitle.BackgroundTransparency = 1
+
+local SContent = Instance.new("TextLabel", ServerPanel)
+SContent.Size = UDim2.new(1, -10, 1, -30)
+SContent.Position = UDim2.new(0, 5, 0, 25)
+SContent.TextColor3 = Color3.fromRGB(200, 200, 200)
+SContent.Font = Enum.Font.Code
+SContent.TextSize = 10
+SContent.TextXAlignment = Enum.TextXAlignment.Left
+SContent.TextYAlignment = Enum.TextYAlignment.Top
+SContent.BackgroundTransparency = 1
+
+-- Live Info Loop
+RunService.RenderStepped:Connect(function()
+    local gName = "Greek RP"
+    pcall(function() gName = Market:GetProductInfo(game.PlaceId).Name end)
+    
+    SContent.Text = string.format(
+        "Game: %s\nPlayers: %d/%d\nInject Time: %s\nTime: %s\nAnticheat: %s\nUser: %s\nID: %d",
+        string.sub(gName, 1, 18),
+        #Players:GetPlayers(), Players.MaxPlayers,
+        getgenv().Config.InjectTime,
+        os.date("%X"),
+        "Bypassed",
+        LP.Name,
+        LP.UserId
+    )
+end)
+
+-- --- 2. BLACK INJECTOR SCREEN ---
+local InjectorFrame = Instance.new("Frame", SG)
+InjectorFrame.Size = UDim2.new(0, 320, 0, 180)
+InjectorFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+InjectorFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5) -- Black
+InjectorFrame.Active = true; InjectorFrame.Draggable = true
+Instance.new("UICorner", InjectorFrame)
+local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
+
+local InjectTitle = Instance.new("TextLabel", InjectorFrame)
+InjectTitle.Size = UDim2.new(1, 0, 0, 40)
+InjectTitle.Text = "DARKDEV INJECTOR"
+InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255)
+InjectTitle.Font = Enum.Font.GothamBold
+InjectTitle.TextSize = 16
+InjectTitle.BackgroundTransparency = 1
+
+local InjectBtn = Instance.new("TextButton", InjectorFrame)
+InjectBtn.Size = UDim2.new(0.8, 0, 0, 45)
+InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0)
+InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+InjectBtn.Text = "💉 INJECT 💉"
+InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255)
+InjectBtn.Font = Enum.Font.GothamBold
+InjectBtn.TextSize = 14
+Instance.new("UICorner", InjectBtn)
+Instance.new("UIStroke", InjectBtn).Color = Color3.fromRGB(0, 255, 255)
+
+-- --- 3. MAIN CHEAT MENU (Hidden initially) ---
 local Main = Instance.new("Frame", SG)
 Main.Size = UDim2.new(0, 560, 0, 320)
 Main.Position = UDim2.new(0.5, -280, 0.5, -160)
 Main.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 Main.Active = true; Main.Draggable = true
+Main.Visible = false
 Instance.new("UICorner", Main)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(124, 77, 255)
+
+-- Floating Icon for Menu
+local OpenIcon = Instance.new("ImageButton", SG)
+OpenIcon.Size = UDim2.new(0, 45, 0, 45); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
+OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
+Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", OpenIcon).Color = Color3.fromRGB(124, 77, 255)
 
 -- Fly UP/DN Buttons
 local FlyOverlay = Instance.new("Frame", SG)
@@ -57,7 +131,7 @@ local function CreateFlyBtn(txt, key, pos)
 end
 CreateFlyBtn("UP", "FlyUp", 0); CreateFlyBtn("DN", "FlyDown", 1)
 
--- Sections Builder
+-- Main Menu Sections
 local function CreateSection(name, pos)
     local s = Instance.new("Frame", Main)
     s.Size = UDim2.new(0, 130, 1, -50); s.Position = UDim2.new(0, 10 + (pos * 140), 0, 40)
@@ -73,18 +147,13 @@ local Col1 = CreateSection("COMBAT", 0)
 local Col2 = CreateSection("VISUALS", 1)
 local Col3 = CreateSection("MOVEMENT", 2)
 
--- UI Toggle Builder (Fixed Text Overlap)
 local function AddToggle(col, txt, key)
     local b = Instance.new("Frame", col)
     b.Size = UDim2.new(1, 0, 0, 25); b.BackgroundTransparency = 1
-    
     local box = Instance.new("TextButton", b)
     box.Size = UDim2.new(0, 14, 0, 14); box.Position = UDim2.new(0, 5, 0.5, -7); box.BackgroundColor3 = Color3.fromRGB(30, 30, 40); box.Text = ""
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 3)
-    
-    local check = Instance.new("Frame", box)
-    check.Size = UDim2.new(1, -4, 1, -4); check.Position = UDim2.new(0, 2, 0, 2); check.BackgroundColor3 = Color3.fromRGB(124, 77, 255); check.Visible = false; Instance.new("UICorner", check)
-
+    local check = Instance.new("Frame", box); check.Size = UDim2.new(1, -4, 1, -4); check.Position = UDim2.new(0, 2, 0, 2); check.BackgroundColor3 = Color3.fromRGB(124, 77, 255); check.Visible = false; Instance.new("UICorner", check)
     local label = Instance.new("TextButton", b)
     label.Size = UDim2.new(1, -25, 1, 0); label.Position = UDim2.new(0, 25, 0, 0); label.BackgroundTransparency = 1
     label.Text = txt; label.TextColor3 = Color3.new(0.8, 0.8, 0.8); label.Font = Enum.Font.Gotham; label.TextSize = 10; label.TextXAlignment = Enum.TextXAlignment.Left
@@ -98,6 +167,11 @@ local function AddToggle(col, txt, key)
     label.MouseButton1Click:Connect(Toggle)
 end
 
+-- Populate Cheat Toggles
+AddToggle(Col1, "Aimbot", "Aimbot"); AddToggle(Col1, "Silent Aim", "SilentAim"); AddToggle(Col1, "Kill Aura", "KillAura"); AddToggle(Col1, "No Recoil", "NoRecoil")
+AddToggle(Col2, "Master ESP", "ESP"); AddToggle(Col2, "Red Skeleton", "Skeleton"); AddToggle(Col2, "Health Bar", "Health"); AddToggle(Col2, "Trace Lines", "Tracers"); AddToggle(Col2, "Distance", "Distance")
+AddToggle(Col3, "Fly Mode", "Fly"); AddToggle(Col3, "Noclip", "Noclip"); AddToggle(Col3, "Fullbright", "Fullbright"); AddToggle(Col3, "Inf Jump", "InfJump"); AddToggle(Col3, "Speed Boost", "SpeedActive")
+
 -- Preview Frame
 local PreviewFrame = Instance.new("Frame", Main)
 PreviewFrame.Size = UDim2.new(0, 120, 1, -50); PreviewFrame.Position = UDim2.new(1, -130, 0, 40)
@@ -106,35 +180,25 @@ Instance.new("UICorner", PreviewFrame)
 local VP = Instance.new("ViewportFrame", PreviewFrame); VP.Size = UDim2.new(1, 0, 1, 0); VP.BackgroundTransparency = 1
 local VPCam = Instance.new("Camera", VP); VP.CurrentCamera = VPCam
 
--- --- POPULATE MODULES ---
-AddToggle(Col1, "Aimbot", "Aimbot")
-AddToggle(Col1, "Silent Aim", "SilentAim")
-AddToggle(Col1, "Kill Aura", "KillAura")
-AddToggle(Col1, "No Recoil", "NoRecoil")
+-- INJECT LOGIC
+InjectBtn.MouseButton1Click:Connect(function()
+    InjectBtn.Text = "INJECTING..."
+    getgenv().Config.InjectTime = os.date("%X")
+    task.wait(1)
+    InjectorFrame.Visible = false
+    Main.Visible = true
+end)
 
-AddToggle(Col2, "Master ESP", "ESP")
-AddToggle(Col2, "Red Skeleton", "Skeleton")
-AddToggle(Col2, "Health Bar", "Health")
-AddToggle(Col2, "Trace Lines", "Tracers")
-AddToggle(Col2, "Distance", "Distance")
+-- Close / Open Main Menu
+local Close = Instance.new("TextButton", Main)
+Close.Size = UDim2.new(0, 25, 0, 25); Close.Position = UDim2.new(1, -30, 0, 5); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1
+Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
+OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
-AddToggle(Col3, "Fly Mode", "Fly")
-AddToggle(Col3, "Noclip", "Noclip")
-AddToggle(Col3, "Fullbright", "Fullbright")
-AddToggle(Col3, "Inf Jump", "InfJump")
-AddToggle(Col3, "Speed Boost", "SpeedActive")
-
--- --- CORE SYSTEMS ---
-
--- ESP Engine (Drawing API)
+-- --- CORE SYSTEMS LOOPS ---
 local ESP_Objects = {}
 local function CreateESP(p)
-    local data = {
-        Box = Drawing.new("Square"),
-        Skelly = Drawing.new("Line"),
-        Health = Drawing.new("Line"),
-        Tracer = Drawing.new("Line")
-    }
+    local data = { Box = Drawing.new("Square"), Skelly = Drawing.new("Line"), Health = Drawing.new("Line"), Tracer = Drawing.new("Line") }
     data.Box.Thickness = 1; data.Box.Filled = false; data.Box.Color = Color3.new(1,1,1)
     data.Skelly.Thickness = 1; data.Skelly.Color = Color3.new(1,0,0)
     data.Health.Thickness = 2; data.Health.Color = Color3.new(0,1,0)
@@ -166,19 +230,16 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Main Loop
 RunService.RenderStepped:Connect(function()
     local Char = LP.Character; if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
     local HRP = Char.HumanoidRootPart
 
-    -- Fly Overlay & Vertical
     FlyOverlay.Visible = getgenv().Config.Fly and not Main.Visible
     if getgenv().Config.Fly then
         local V = 0; if getgenv().Config.FlyUp then V = 50 elseif getgenv().Config.FlyDown then V = -50 end
         HRP.Velocity = (Char.Humanoid.MoveDirection * getgenv().Config.FlySpeed) + Vector3.new(0, V + 1.5, 0)
     end
     
-    -- Target Finder & Preview
     local T, D = nil, 400
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LP and p.Character and p.Character:FindFirstChild("Head") then
@@ -203,7 +264,6 @@ RunService.RenderStepped:Connect(function()
     if getgenv().Config.SpeedActive then LP.Character.Humanoid.WalkSpeed = 60 else LP.Character.Humanoid.WalkSpeed = 16 end
 end)
 
--- Noclip & Inf Jump
 RunService.Stepped:Connect(function()
     if getgenv().Config.Noclip and LP.Character then for _, v in pairs(LP.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end end
 end)
@@ -212,10 +272,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
--- Close / Open
-local Close = Instance.new("TextButton", Main)
-Close.Size = UDim2.new(0, 25, 0, 25); Close.Position = UDim2.new(1, -30, 0, 5); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1
-Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
-OpenIcon.IconBtn = OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
-
-print("Skush Master v19.0 Loaded.")
+print("DarkDev Injector Suite v20.0 Loaded.")
