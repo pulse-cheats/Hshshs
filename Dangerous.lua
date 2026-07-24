@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - INJECTOR SUITE v20.0
-    Architect: Machine
-    Features: Injector Screen, Live Server Panel, Full Skush GUI
+    DARKDEV GREEK RP - INJECTOR SUITE v21.0
+    Architect: sotiris_gkal
+    Features: Black Injector Screen, Integrated Server Panel Toggle, Skush Menu
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -26,54 +26,9 @@ getgenv().Config = {
 }
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v20"
+SG.Name = "DarkDev_v21"
 
--- --- 1. SERVER STATUS PANEL (Top Left) ---
-local ServerPanel = Instance.new("Frame", SG)
-ServerPanel.Size = UDim2.new(0, 220, 0, 150)
-ServerPanel.Position = UDim2.new(0, 10, 0, 10)
-ServerPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-ServerPanel.BorderSizePixel = 0
-Instance.new("UICorner", ServerPanel)
-local SStroke = Instance.new("UIStroke", ServerPanel); SStroke.Color = Color3.fromRGB(124, 77, 255); SStroke.Thickness = 1.5
-
-local STitle = Instance.new("TextLabel", ServerPanel)
-STitle.Size = UDim2.new(1, 0, 0, 25)
-STitle.Text = "  SERVER & CLIENT INFO"
-STitle.TextColor3 = Color3.fromRGB(124, 77, 255)
-STitle.Font = Enum.Font.GothamBold
-STitle.TextSize = 11
-STitle.TextXAlignment = Enum.TextXAlignment.Left
-STitle.BackgroundTransparency = 1
-
-local SContent = Instance.new("TextLabel", ServerPanel)
-SContent.Size = UDim2.new(1, -10, 1, -30)
-SContent.Position = UDim2.new(0, 5, 0, 25)
-SContent.TextColor3 = Color3.fromRGB(200, 200, 200)
-SContent.Font = Enum.Font.Code
-SContent.TextSize = 10
-SContent.TextXAlignment = Enum.TextXAlignment.Left
-SContent.TextYAlignment = Enum.TextYAlignment.Top
-SContent.BackgroundTransparency = 1
-
--- Live Info Loop
-RunService.RenderStepped:Connect(function()
-    local gName = "Greek RP"
-    pcall(function() gName = Market:GetProductInfo(game.PlaceId).Name end)
-    
-    SContent.Text = string.format(
-        "Game: %s\nPlayers: %d/%d\nInject Time: %s\nTime: %s\nAnticheat: %s\nUser: %s\nID: %d",
-        string.sub(gName, 1, 18),
-        #Players:GetPlayers(), Players.MaxPlayers,
-        getgenv().Config.InjectTime,
-        os.date("%X"),
-        "Bypassed",
-        LP.Name,
-        LP.UserId
-    )
-end)
-
--- --- 2. BLACK INJECTOR SCREEN ---
+-- --- 1. BLACK INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
 InjectorFrame.Size = UDim2.new(0, 320, 0, 180)
 InjectorFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
@@ -101,7 +56,75 @@ InjectBtn.TextSize = 14
 Instance.new("UICorner", InjectBtn)
 Instance.new("UIStroke", InjectBtn).Color = Color3.fromRGB(0, 255, 255)
 
--- --- 3. MAIN CHEAT MENU (Hidden initially) ---
+-- --- 2. SERVER PANEL WITH TOGGLE BUTTON & CLOSE (X) ---
+local ServerPanel = Instance.new("Frame", SG)
+ServerPanel.Size = UDim2.new(0, 230, 0, 185)
+ServerPanel.Position = UDim2.new(0, 10, 0, 10)
+ServerPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+ServerPanel.BorderSizePixel = 0
+ServerPanel.Visible = false
+Instance.new("UICorner", ServerPanel)
+local SStroke = Instance.new("UIStroke", ServerPanel); SStroke.Color = Color3.fromRGB(124, 77, 255); SStroke.Thickness = 1.5
+
+-- Close Button (X) on Server Panel
+local PanelCloseBtn = Instance.new("TextButton", ServerPanel)
+PanelCloseBtn.Size = UDim2.new(0, 20, 0, 20)
+PanelCloseBtn.Position = UDim2.new(1, -25, 0, 5)
+PanelCloseBtn.Text = "X"
+PanelCloseBtn.TextColor3 = Color3.new(1, 0, 0)
+PanelCloseBtn.BackgroundTransparency = 1
+PanelCloseBtn.Font = Enum.Font.GothamBold
+PanelCloseBtn.TextSize = 12
+
+local STitle = Instance.new("TextLabel", ServerPanel)
+STitle.Size = UDim2.new(1, -30, 0, 25)
+STitle.Text = "  SERVER & CLIENT INFO"
+STitle.TextColor3 = Color3.fromRGB(124, 77, 255)
+STitle.Font = Enum.Font.GothamBold
+STitle.TextSize = 11
+STitle.TextXAlignment = Enum.TextXAlignment.Left
+STitle.BackgroundTransparency = 1
+
+local SContent = Instance.new("TextLabel", ServerPanel)
+SContent.Size = UDim2.new(1, -10, 0, 110)
+SContent.Position = UDim2.new(0, 5, 0, 25)
+SContent.TextColor3 = Color3.fromRGB(200, 200, 200)
+SContent.Font = Enum.Font.Code
+SContent.TextSize = 10
+SContent.TextXAlignment = Enum.TextXAlignment.Left
+SContent.TextYAlignment = Enum.TextYAlignment.Top
+SContent.BackgroundTransparency = 1
+
+-- Open GUI Button inside Server Panel
+local PanelOpenMenuBtn = Instance.new("TextButton", ServerPanel)
+PanelOpenMenuBtn.Size = UDim2.new(1, -10, 0, 30)
+PanelOpenMenuBtn.Position = UDim2.new(0, 5, 1, -35)
+PanelOpenMenuBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+PanelOpenMenuBtn.Text = "⚡ OPEN CHEAT MENU ⚡"
+PanelOpenMenuBtn.TextColor3 = Color3.fromRGB(0, 255, 255)
+PanelOpenMenuBtn.Font = Enum.Font.GothamBold
+PanelOpenMenuBtn.TextSize = 11
+Instance.new("UICorner", PanelOpenMenuBtn)
+Instance.new("UIStroke", PanelOpenMenuBtn).Color = Color3.fromRGB(124, 77, 255)
+
+-- Live Info Loop
+RunService.RenderStepped:Connect(function()
+    local gName = "Greek RP"
+    pcall(function() gName = Market:GetProductInfo(game.PlaceId).Name end)
+    
+    SContent.Text = string.format(
+        "Game: %s\nPlayers: %d/%d\nInject Time: %s\nTime: %s\nAnticheat: %s\nUser: %s\nID: %d",
+        string.sub(gName, 1, 18),
+        #Players:GetPlayers(), Players.MaxPlayers,
+        getgenv().Config.InjectTime,
+        os.date("%X"),
+        "Bypassed",
+        LP.Name,
+        LP.UserId
+    )
+end)
+
+-- --- 3. MAIN CHEAT MENU ---
 local Main = Instance.new("Frame", SG)
 Main.Size = UDim2.new(0, 560, 0, 320)
 Main.Position = UDim2.new(0.5, -280, 0.5, -160)
@@ -111,7 +134,7 @@ Main.Visible = false
 Instance.new("UICorner", Main)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(124, 77, 255)
 
--- Floating Icon for Menu
+-- Floating Icon
 local OpenIcon = Instance.new("ImageButton", SG)
 OpenIcon.Size = UDim2.new(0, 45, 0, 45); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
 OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
@@ -186,7 +209,18 @@ InjectBtn.MouseButton1Click:Connect(function()
     getgenv().Config.InjectTime = os.date("%X")
     task.wait(1)
     InjectorFrame.Visible = false
+    ServerPanel.Visible = true
     Main.Visible = true
+end)
+
+-- Server Panel Interactions
+PanelOpenMenuBtn.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+    if not Main.Visible then OpenIcon.Visible = true else OpenIcon.Visible = false end
+end)
+
+PanelCloseBtn.MouseButton1Click:Connect(function()
+    ServerPanel.Visible = false
 end)
 
 -- Close / Open Main Menu
@@ -272,4 +306,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Injector Suite v20.0 Loaded.")
+print("DarkDev Injector Suite v21.0 Loaded.")
