@@ -1,7 +1,11 @@
 --[[
-    DARKDEV GREEK RP - INJECTOR SUITE v21.0
-    Architect: sotiris_gkal
-    Features: Black Injector Screen, Integrated Server Panel Toggle, Skush Menu
+    DARKDEV GREEK RP - INJECTOR SUITE v21.0 (COMPLETE & FIXED)
+    Architect: Rool Machine
+    Features:
+    - Initial Black Injector Screen
+    - Server Panel (Top-Left) with Toggle Button & Close (X)
+    - Skush Menu with 3 Columns (Combat, Visuals, Movement)
+    - Preview Box & Fly Overlay
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -15,7 +19,7 @@ local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
 
--- --- CONFIG ---
+-- --- CONFIGURATION ---
 getgenv().Config = {
     Aimbot = false, SilentAim = false, KillAura = false,
     ESP = false, Skeleton = true, Health = true, Tracers = true, Distance = true,
@@ -26,7 +30,7 @@ getgenv().Config = {
 }
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v21"
+SG.Name = "DarkDev_v21_Final"
 
 -- --- 1. BLACK INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -56,7 +60,7 @@ InjectBtn.TextSize = 14
 Instance.new("UICorner", InjectBtn)
 Instance.new("UIStroke", InjectBtn).Color = Color3.fromRGB(0, 255, 255)
 
--- --- 2. SERVER PANEL WITH TOGGLE BUTTON & CLOSE (X) ---
+-- --- 2. SERVER PANEL (WITH TOGGLE BUTTON & CLOSE X) ---
 local ServerPanel = Instance.new("Frame", SG)
 ServerPanel.Size = UDim2.new(0, 230, 0, 185)
 ServerPanel.Position = UDim2.new(0, 10, 0, 10)
@@ -95,7 +99,7 @@ SContent.TextXAlignment = Enum.TextXAlignment.Left
 SContent.TextYAlignment = Enum.TextYAlignment.Top
 SContent.BackgroundTransparency = 1
 
--- Open GUI Button inside Server Panel
+-- Open GUI Button inside the Server Panel
 local PanelOpenMenuBtn = Instance.new("TextButton", ServerPanel)
 PanelOpenMenuBtn.Size = UDim2.new(1, -10, 0, 30)
 PanelOpenMenuBtn.Position = UDim2.new(0, 5, 1, -35)
@@ -134,7 +138,7 @@ Main.Visible = false
 Instance.new("UICorner", Main)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(124, 77, 255)
 
--- Floating Icon
+-- Floating Icon (Alternative toggle)
 local OpenIcon = Instance.new("ImageButton", SG)
 OpenIcon.Size = UDim2.new(0, 45, 0, 45); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
 OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
