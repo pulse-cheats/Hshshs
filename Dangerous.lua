@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - SKUSH ULTIMATE v23.0 (GAMEPASS EDITION)
+    DARKDEV GREEK RP - SKUSH PRO v26.0 (DESTROYER GAMEPASS EDITION)
     Architect: Rool Machine
-    New: Mangore Gamepass Troll Feature, Server Event Integration
+    New: Destroyer Mode (Click to Strike Targets with Explosions)
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -11,95 +11,81 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Market = game:GetService("MarketplaceService")
+local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
+local Mouse = LP:GetMouse()
 
 -- --- CONFIGURATION ---
 getgenv().Config = {
     Aimbot = false, SilentAim = false, KillAura = false, NoRecoil = false,
-    ESP = false, Skeleton = true, Health = true, Tracers = true, Distance = true,
-    Fly = false, Noclip = false, SpeedActive = false, JumpActive = false, InfJump = false,
-    Fullbright = false, DayMode = true, CustomSky = false,
+    Triggerbot = false, HitboxExpander = false,
+    ESP = false, Skeleton = true, Health = true, Tracers = true, HeadDot = false,
+    Fly = false, Noclip = false, SpeedActive = false, JumpActive = false, InfJump = false, Spinbot = false,
+    VehicleBoost = false, InfStamina = false, ClickTP = false, DestroyerMode = false, FastReload = false, Fullbright = false, AntiAFK = false,
     FlySpeed = 50, FlyUp = false, FlyDown = false, Smooth = 0.15,
-    SelectedTarget = "",
     InjectTime = "Not Injected"
 }
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v23"
+SG.Name = "DarkDev_v26_Destroyer"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
-InjectorFrame.Size = UDim2.new(0, 320, 0, 180)
-InjectorFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
-InjectorFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-InjectorFrame.Active = true; InjectorFrame.Draggable = true
+InjectorFrame.Size = UDim2.new(0, 260, 0, 150); InjectorFrame.Position = UDim2.new(0.5, -130, 0.5, -75); InjectorFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5); InjectorFrame.Active = true; InjectorFrame.Draggable = true
 Instance.new("UICorner", InjectorFrame)
 local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 40)
-InjectTitle.Text = "DARKDEV INJECTOR"
-InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255)
-InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 16; InjectTitle.BackgroundTransparency = 1
+InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v26"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
-InjectBtn.Size = UDim2.new(0.8, 0, 0, 45)
-InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0)
-InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-InjectBtn.Text = "💉 INJECT 💉"
-InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255)
-InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 14
-Instance.new("UICorner", InjectBtn)
-Instance.new("UIStroke", InjectBtn).Color = Color3.fromRGB(0, 255, 255)
+InjectBtn.Size = UDim2.new(0.8, 0, 0, 38); InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
+Instance.new("UICorner", InjectBtn); Instance.new("UIStroke", InjectBtn).Color = Color3.fromRGB(0, 255, 255)
 
 -- --- 2. SERVER PANEL ---
 local ServerPanel = Instance.new("Frame", SG)
-ServerPanel.Size = UDim2.new(0, 230, 0, 185)
-ServerPanel.Position = UDim2.new(0, 10, 0, 10)
-ServerPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-ServerPanel.Visible = false
+ServerPanel.Size = UDim2.new(0, 200, 0, 160); ServerPanel.Position = UDim2.new(0, 10, 0, 10); ServerPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 15); ServerPanel.Visible = false
 Instance.new("UICorner", ServerPanel)
 local SStroke = Instance.new("UIStroke", ServerPanel); SStroke.Color = Color3.fromRGB(124, 77, 255); SStroke.Thickness = 1.5
 
 local PanelCloseBtn = Instance.new("TextButton", ServerPanel)
-PanelCloseBtn.Size = UDim2.new(0, 20, 0, 20); PanelCloseBtn.Position = UDim2.new(1, -25, 0, 5)
-PanelCloseBtn.Text = "X"; PanelCloseBtn.TextColor3 = Color3.new(1, 0, 0); PanelCloseBtn.BackgroundTransparency = 1; PanelCloseBtn.Font = Enum.Font.GothamBold
+PanelCloseBtn.Size = UDim2.new(0, 20, 0, 20); PanelCloseBtn.Position = UDim2.new(1, -22, 0, 3); PanelCloseBtn.Text = "X"; PanelCloseBtn.TextColor3 = Color3.new(1, 0, 0); PanelCloseBtn.BackgroundTransparency = 1; PanelCloseBtn.Font = Enum.Font.GothamBold
 
 local STitle = Instance.new("TextLabel", ServerPanel)
-STitle.Size = UDim2.new(1, -30, 0, 25); STitle.Text = "  SERVER INFO"; STitle.TextColor3 = Color3.fromRGB(124, 77, 255); STitle.Font = Enum.Font.GothamBold; STitle.TextSize = 11; STitle.TextXAlignment = Enum.TextXAlignment.Left; STitle.BackgroundTransparency = 1
+STitle.Size = UDim2.new(1, -25, 0, 22); STitle.Text = "  SERVER INFO"; STitle.TextColor3 = Color3.fromRGB(124, 77, 255); STitle.Font = Enum.Font.GothamBold; STitle.TextSize = 10; STitle.TextXAlignment = Enum.TextXAlignment.Left; STitle.BackgroundTransparency = 1
 
 local SContent = Instance.new("TextLabel", ServerPanel)
-SContent.Size = UDim2.new(1, -10, 0, 110); SContent.Position = UDim2.new(0, 5, 0, 25); SContent.TextColor3 = Color3.fromRGB(200, 200, 200); SContent.Font = Enum.Font.Code; SContent.TextSize = 10; SContent.TextXAlignment = Enum.TextXAlignment.Left; SContent.TextYAlignment = Enum.TextYAlignment.Top; SContent.BackgroundTransparency = 1
+SContent.Size = UDim2.new(1, -10, 0, 95); SContent.Position = UDim2.new(0, 5, 0, 22); SContent.TextColor3 = Color3.fromRGB(200, 200, 200); SContent.Font = Enum.Font.Code; SContent.TextSize = 9; SContent.TextXAlignment = Enum.TextXAlignment.Left; SContent.TextYAlignment = Enum.TextYAlignment.Top; SContent.BackgroundTransparency = 1
 
 local PanelOpenMenuBtn = Instance.new("TextButton", ServerPanel)
-PanelOpenMenuBtn.Size = UDim2.new(1, -10, 0, 30); PanelOpenMenuBtn.Position = UDim2.new(0, 5, 1, -35); PanelOpenMenuBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); PanelOpenMenuBtn.Text = "⚡ OPEN CHEAT MENU ⚡"; PanelOpenMenuBtn.TextColor3 = Color3.fromRGB(0, 255, 255); PanelOpenMenuBtn.Font = Enum.Font.GothamBold; PanelOpenMenuBtn.TextSize = 11
+PanelOpenMenuBtn.Size = UDim2.new(1, -10, 0, 26); PanelOpenMenuBtn.Position = UDim2.new(0, 5, 1, -30); PanelOpenMenuBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); PanelOpenMenuBtn.Text = "⚡ OPEN CHEAT MENU ⚡"; PanelOpenMenuBtn.TextColor3 = Color3.fromRGB(0, 255, 255); PanelOpenMenuBtn.Font = Enum.Font.GothamBold; PanelOpenMenuBtn.TextSize = 10
 Instance.new("UICorner", PanelOpenMenuBtn)
 
 RunService.RenderStepped:Connect(function()
     local gName = "Greek RP"
     pcall(function() gName = Market:GetProductInfo(game.PlaceId).Name end)
     SContent.Text = string.format("Game: %s\nPlayers: %d/%d\nInject Time: %s\nTime: %s\nUser: %s\nID: %d",
-        string.sub(gName, 1, 18), #Players:GetPlayers(), Players.MaxPlayers, getgenv().Config.InjectTime, os.date("%X"), LP.Name, LP.UserId)
+        string.sub(gName, 1, 16), #Players:GetPlayers(), Players.MaxPlayers, getgenv().Config.InjectTime, os.date("%X"), LP.Name, LP.UserId)
 end)
 
 -- --- 3. MAIN CHEAT MENU ---
 local Main = Instance.new("Frame", SG)
-Main.Size = UDim2.new(0, 680, 0, 320); Main.Position = UDim2.new(0.5, -340, 0.5, -160); Main.BackgroundColor3 = Color3.fromRGB(18, 18, 26); Main.Active = true; Main.Draggable = true; Main.Visible = false
+Main.Size = UDim2.new(0, 520, 0, 260); Main.Position = UDim2.new(0.5, -260, 0.5, -130); Main.BackgroundColor3 = Color3.fromRGB(18, 18, 26); Main.Active = true; Main.Draggable = true; Main.Visible = false
 Instance.new("UICorner", Main); Instance.new("UIStroke", Main).Color = Color3.fromRGB(124, 77, 255)
 
 local OpenIcon = Instance.new("ImageButton", SG)
-OpenIcon.Size = UDim2.new(0, 45, 0, 45); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0); OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
+OpenIcon.Size = UDim2.new(0, 40, 0, 40); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0); OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
 Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
 
 -- Fly Overlay
 local FlyOverlay = Instance.new("Frame", SG)
-FlyOverlay.Size = UDim2.new(0, 50, 0, 110); FlyOverlay.Position = UDim2.new(1, -60, 0.5, -55); FlyOverlay.BackgroundTransparency = 1; FlyOverlay.Visible = false
+FlyOverlay.Size = UDim2.new(0, 45, 0, 95); FlyOverlay.Position = UDim2.new(1, -55, 0.5, -47); FlyOverlay.BackgroundTransparency = 1; FlyOverlay.Visible = false
 local function CreateFlyBtn(txt, key, pos)
     local b = Instance.new("TextButton", FlyOverlay)
-    b.Size = UDim2.new(1, 0, 0, 50); b.Position = UDim2.new(0, 0, 0, pos * 55); b.BackgroundColor3 = Color3.fromRGB(25, 25, 35); b.Text = txt; b.TextColor3 = Color3.fromRGB(0, 255, 255); b.Font = Enum.Font.GothamBold
+    b.Size = UDim2.new(1, 0, 0, 45); b.Position = UDim2.new(0, 0, 0, pos * 48); b.BackgroundColor3 = Color3.fromRGB(25, 25, 35); b.Text = txt; b.TextColor3 = Color3.fromRGB(0, 255, 255); b.Font = Enum.Font.GothamBold; b.TextSize = 11
     Instance.new("UICorner", b).CornerRadius = UDim.new(1, 0)
     b.MouseButton1Down:Connect(function() getgenv().Config[key] = true end)
     b.MouseButton1Up:Connect(function() getgenv().Config[key] = false end)
@@ -109,29 +95,29 @@ CreateFlyBtn("UP", "FlyUp", 0); CreateFlyBtn("DN", "FlyDown", 1)
 -- 4 Sections
 local function CreateSection(name, pos)
     local s = Instance.new("Frame", Main)
-    s.Size = UDim2.new(0, 125, 1, -50); s.Position = UDim2.new(0, 10 + (pos * 133), 0, 40); s.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+    s.Size = UDim2.new(0, 98, 1, -40); s.Position = UDim2.new(0, 8 + (pos * 102), 0, 30); s.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
     Instance.new("UICorner", s)
-    local t = Instance.new("TextLabel", s); t.Size = UDim2.new(1, 0, 0, 25); t.Text = name; t.TextColor3 = Color3.fromRGB(124, 77, 255); t.Font = Enum.Font.GothamBold; t.TextSize = 10; t.BackgroundTransparency = 1
-    local c = Instance.new("ScrollingFrame", s); c.Size = UDim2.new(1, -10, 1, -30); c.Position = UDim2.new(0, 5, 0, 25); c.BackgroundTransparency = 1; c.ScrollBarThickness = 0
-    Instance.new("UIListLayout", c).Padding = UDim.new(0, 5)
+    local t = Instance.new("TextLabel", s); t.Size = UDim2.new(1, 0, 0, 20); t.Text = name; t.TextColor3 = Color3.fromRGB(124, 77, 255); t.Font = Enum.Font.GothamBold; t.TextSize = 9; t.BackgroundTransparency = 1
+    local c = Instance.new("ScrollingFrame", s); c.Size = UDim2.new(1, -6, 1, -24); c.Position = UDim2.new(0, 3, 0, 22); c.BackgroundTransparency = 1; c.ScrollBarThickness = 0
+    Instance.new("UIListLayout", c).Padding = UDim.new(0, 4)
     return c
 end
 
 local Col1 = CreateSection("COMBAT", 0)
 local Col2 = CreateSection("VISUALS", 1)
-local Col3 = CreateSection("MOVEMENT", 2)
-local Col4 = CreateSection("GAME", 3)
+local Col3 = CreateSection("MOVE", 2)
+local Col4 = CreateSection("RP UTILS", 3)
 
 local function AddToggle(col, txt, key, callback)
     local b = Instance.new("Frame", col)
-    b.Size = UDim2.new(1, 0, 0, 25); b.BackgroundTransparency = 1
+    b.Size = UDim2.new(1, 0, 0, 20); b.BackgroundTransparency = 1
     local box = Instance.new("TextButton", b)
-    box.Size = UDim2.new(0, 14, 0, 14); box.Position = UDim2.new(0, 5, 0.5, -7); box.BackgroundColor3 = Color3.fromRGB(30, 30, 40); box.Text = ""
+    box.Size = UDim2.new(0, 11, 0, 11); box.Position = UDim2.new(0, 2, 0.5, -5); box.BackgroundColor3 = Color3.fromRGB(30, 30, 40); box.Text = ""
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 3)
     local check = Instance.new("Frame", box); check.Size = UDim2.new(1, -4, 1, -4); check.Position = UDim2.new(0, 2, 0, 2); check.BackgroundColor3 = Color3.fromRGB(124, 77, 255); check.Visible = false; Instance.new("UICorner", check)
     local label = Instance.new("TextButton", b)
-    label.Size = UDim2.new(1, -25, 1, 0); label.Position = UDim2.new(0, 25, 0, 0); label.BackgroundTransparency = 1
-    label.Text = txt; label.TextColor3 = Color3.new(0.8, 0.8, 0.8); label.Font = Enum.Font.Gotham; label.TextSize = 10; label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Size = UDim2.new(1, -16, 1, 0); label.Position = UDim2.new(0, 16, 0, 0); label.BackgroundTransparency = 1
+    label.Text = txt; label.TextColor3 = Color3.new(0.8, 0.8, 0.8); label.Font = Enum.Font.Gotham; label.TextSize = 8; label.TextXAlignment = Enum.TextXAlignment.Left
 
     local function Toggle()
         getgenv().Config[key] = not getgenv().Config[key]
@@ -143,44 +129,44 @@ local function AddToggle(col, txt, key, callback)
     label.MouseButton1Click:Connect(Toggle)
 end
 
--- Action Button Builder (For Gamepass actions like Mangore)
-local function AddActionButton(col, txt, callback)
-    local b = Instance.new("TextButton", col)
-    b.Size = UDim2.new(1, 0, 0, 25)
-    b.BackgroundColor3 = Color3.fromRGB(30, 20, 45)
-    b.Text = txt; b.TextColor3 = Color3.fromRGB(0, 255, 255)
-    b.Font = Enum.Font.GothamBold; b.TextSize = 10
-    Instance.new("UICorner", b)
-    b.MouseButton1Click:Connect(callback)
-end
+-- Toggles Setup
+AddToggle(Col1, "Aimbot Head", "Aimbot")
+AddToggle(Col1, "Silent Aim", "SilentAim")
+AddToggle(Col1, "Triggerbot", "Triggerbot")
+AddToggle(Col1, "Kill Aura", "KillAura")
 
--- Toggles & Buttons Setup
-AddToggle(Col1, "Aimbot (Head)", "Aimbot"); AddToggle(Col1, "Silent Aim", "SilentAim"); AddToggle(Col1, "Kill Aura", "KillAura"); AddToggle(Col1, "No Recoil", "NoRecoil")
-AddToggle(Col2, "Master ESP", "ESP"); AddToggle(Col2, "Red Skeleton", "Skeleton"); AddToggle(Col2, "Health Bar", "Health"); AddToggle(Col2, "Trace Lines", "Tracers")
-AddToggle(Col3, "Fly Mode", "Fly"); AddToggle(Col3, "Noclip", "Noclip"); AddToggle(Col3, "Inf Jump", "InfJump"); AddToggle(Col3, "Speed Boost", "SpeedActive")
+AddToggle(Col2, "Master ESP", "ESP")
+AddToggle(Col2, "Skeleton", "Skeleton")
+AddToggle(Col2, "Health Bar", "Health")
+AddToggle(Col2, "Tracers", "Tracers")
 
--- GAME Column Controls
-AddToggle(Col4, "Day Mode", "DayMode", function(v) Lighting.ClockTime = v and 14 or 0 end)
-AddToggle(Col4, "Fullbright", "Fullbright", function(v) Lighting.Brightness = v and 2 or 1 end)
+AddToggle(Col3, "Fly Mode", "Fly")
+AddToggle(Col3, "Noclip", "Noclip")
+AddToggle(Col3, "Inf Jump", "InfJump")
+AddToggle(Col3, "Speed Boost", "SpeedActive")
 
--- MANGORE GAMEPASS BUTTON
-AddActionButton(Col4, "💥 MANGORE (Troll)", function()
-    local targetName = getgenv().Config.SelectedTarget
-    if targetName ~= "" then
-        local adminEvent = ReplicatedStorage:FindFirstChild("GamepassAdminEvent")
-        if adminEvent then
-            adminEvent:FireServer("Mangore", targetName)
+-- RP UTILS (With Destroyer Mode)
+AddToggle(Col4, "Destroyer", "DestroyerMode")
+AddToggle(Col4, "Car Boost", "VehicleBoost")
+AddToggle(Col4, "Inf Stamina", "InfStamina")
+AddToggle(Col4, "Click TP", "ClickTP")
+AddToggle(Col4, "Fullbright", "Fullbright")
+
+-- Destroyer Click Logic
+Mouse.Button1Down:Connect(function()
+    if getgenv().Config.DestroyerMode and Mouse.Hit then
+        local destroyerEvent = ReplicatedStorage:FindFirstChild("DestroyerEvent")
+        if destroyerEvent then
+            destroyerEvent:FireServer(Mouse.Hit.Position)
         else
-            warn("GamepassAdminEvent not found in ReplicatedStorage!")
+            warn("DestroyerEvent not found in ReplicatedStorage!")
         end
-    else
-        warn("No target selected!")
     end
 end)
 
 -- Preview Frame
 local PreviewFrame = Instance.new("Frame", Main)
-PreviewFrame.Size = UDim2.new(0, 115, 1, -50); PreviewFrame.Position = UDim2.new(1, -125, 0, 40)
+PreviewFrame.Size = UDim2.new(0, 90, 1, -40); PreviewFrame.Position = UDim2.new(1, -98, 0, 30)
 PreviewFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
 Instance.new("UICorner", PreviewFrame)
 local VP = Instance.new("ViewportFrame", PreviewFrame); VP.Size = UDim2.new(1, 0, 1, 0); VP.BackgroundTransparency = 1
@@ -199,7 +185,7 @@ end)
 PanelOpenMenuBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 PanelCloseBtn.MouseButton1Click:Connect(function() ServerPanel.Visible = false end)
 local Close = Instance.new("TextButton", Main)
-Close.Size = UDim2.new(0, 25, 0, 25); Close.Position = UDim2.new(1, -30, 0, 5); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1
+Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1; Close.Font = Enum.Font.GothamBold
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
@@ -259,7 +245,6 @@ RunService.RenderStepped:Connect(function()
                 if screenDist < ClosestDist then
                     ClosestDist = screenDist
                     TargetHead = p.Character.Head
-                    getgenv().Config.SelectedTarget = p.Name
                 end
             end
         end
@@ -293,4 +278,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("Skush Gamepass Edition v23.0 Loaded.")
+print("DarkDev Destroyer v26.0 Loaded.")
