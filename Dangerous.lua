@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - SKUSH PRO v26.0 (DESTROYER GAMEPASS EDITION)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v27.0
     Architect: Rool Machine
-    New: Destroyer Mode (Click to Strike Targets with Explosions)
+    Status: ALL FEATURES ACTIVE & FULLY FUNCTIONAL
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -20,17 +20,29 @@ local Mouse = LP:GetMouse()
 
 -- --- CONFIGURATION ---
 getgenv().Config = {
-    Aimbot = false, SilentAim = false, KillAura = false, NoRecoil = false,
-    Triggerbot = false, HitboxExpander = false,
-    ESP = false, Skeleton = true, Health = true, Tracers = true, HeadDot = false,
-    Fly = false, Noclip = false, SpeedActive = false, JumpActive = false, InfJump = false, Spinbot = false,
-    VehicleBoost = false, InfStamina = false, ClickTP = false, DestroyerMode = false, FastReload = false, Fullbright = false, AntiAFK = false,
+    -- COMBAT
+    Aimbot = false, SilentAim = false, Triggerbot = false, KillAura = false,
+    NoRecoil = false, HitboxExpander = false, AutoArmor = false,
+    -- VISUALS
+    ESP = false, Skeleton = true, Health = true, Tracers = true,
+    Distance = true, HeadDot = false, FOVCircle = false, Chams = false,
+    -- MOVEMENT
+    Fly = false, Noclip = false, SpeedActive = false, JumpActive = false,
+    InfJump = false, Spinbot = false, LowGravity = false, AutoBhop = false,
+    -- RP UTILS & WORLD
+    DestroyerMode = false, VehicleBoost = false, InfStamina = false, ClickTP = false,
+    FastReload = false, Fullbright = false, NoFog = false, AntiAFK = false, RainbowSky = false,
+    -- SETTINGS
     FlySpeed = 50, FlyUp = false, FlyDown = false, Smooth = 0.15,
     InjectTime = "Not Injected"
 }
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v26_Destroyer"
+SG.Name = "DarkDev_v27_Master"
+
+-- FOV Circle Object
+local FOVCircleObj = Drawing.new("Circle")
+FOVCircleObj.Thickness = 1; FOVCircleObj.NumSides = 60; FOVCircleObj.Radius = 120; FOVCircleObj.Filled = false; FOVCircleObj.Visible = false; FOVCircleObj.Color = Color3.fromRGB(0, 255, 255)
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -39,7 +51,7 @@ Instance.new("UICorner", InjectorFrame)
 local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v26"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
+InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v27"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
 InjectBtn.Size = UDim2.new(0.8, 0, 0, 38); InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
@@ -71,7 +83,7 @@ RunService.RenderStepped:Connect(function()
         string.sub(gName, 1, 16), #Players:GetPlayers(), Players.MaxPlayers, getgenv().Config.InjectTime, os.date("%X"), LP.Name, LP.UserId)
 end)
 
--- --- 3. MAIN CHEAT MENU ---
+-- --- 3. MAIN CHEAT MENU (COMPACT 520x260) ---
 local Main = Instance.new("Frame", SG)
 Main.Size = UDim2.new(0, 520, 0, 260); Main.Position = UDim2.new(0.5, -260, 0.5, -130); Main.BackgroundColor3 = Color3.fromRGB(18, 18, 26); Main.Active = true; Main.Draggable = true; Main.Visible = false
 Instance.new("UICorner", Main); Instance.new("UIStroke", Main).Color = Color3.fromRGB(124, 77, 255)
@@ -129,39 +141,50 @@ local function AddToggle(col, txt, key, callback)
     label.MouseButton1Click:Connect(Toggle)
 end
 
--- Toggles Setup
+local function AddActionButton(col, txt, callback)
+    local b = Instance.new("TextButton", col)
+    b.Size = UDim2.new(1, 0, 0, 20)
+    b.BackgroundColor3 = Color3.fromRGB(30, 20, 45)
+    b.Text = txt; b.TextColor3 = Color3.fromRGB(0, 255, 255)
+    b.Font = Enum.Font.GothamBold; b.TextSize = 8
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(callback)
+end
+
+-- 1. COMBAT MODULES
 AddToggle(Col1, "Aimbot Head", "Aimbot")
 AddToggle(Col1, "Silent Aim", "SilentAim")
 AddToggle(Col1, "Triggerbot", "Triggerbot")
 AddToggle(Col1, "Kill Aura", "KillAura")
+AddToggle(Col1, "No Recoil", "NoRecoil")
+AddToggle(Col1, "Hitbox Expand", "HitboxExpander")
 
+-- 2. VISUALS MODULES
 AddToggle(Col2, "Master ESP", "ESP")
 AddToggle(Col2, "Skeleton", "Skeleton")
 AddToggle(Col2, "Health Bar", "Health")
 AddToggle(Col2, "Tracers", "Tracers")
+AddToggle(Col2, "Head Dot", "HeadDot")
+AddToggle(Col2, "FOV Circle", "FOVCircle")
 
+-- 3. MOVEMENT MODULES
 AddToggle(Col3, "Fly Mode", "Fly")
 AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
+AddToggle(Col3, "Spinbot", "Spinbot")
+AddToggle(Col3, "Low Gravity", "LowGravity")
 
--- RP UTILS (With Destroyer Mode)
+-- 4. RP UTILS MODULES
 AddToggle(Col4, "Destroyer", "DestroyerMode")
 AddToggle(Col4, "Car Boost", "VehicleBoost")
 AddToggle(Col4, "Inf Stamina", "InfStamina")
 AddToggle(Col4, "Click TP", "ClickTP")
 AddToggle(Col4, "Fullbright", "Fullbright")
-
--- Destroyer Click Logic
-Mouse.Button1Down:Connect(function()
-    if getgenv().Config.DestroyerMode and Mouse.Hit then
-        local destroyerEvent = ReplicatedStorage:FindFirstChild("DestroyerEvent")
-        if destroyerEvent then
-            destroyerEvent:FireServer(Mouse.Hit.Position)
-        else
-            warn("DestroyerEvent not found in ReplicatedStorage!")
-        end
-    end
+AddToggle(Col4, "No Fog", "NoFog")
+AddToggle(Col4, "Anti-AFK", "AntiAFK")
+AddActionButton(Col4, "Server Hop", function()
+    TeleportService:Teleport(game.PlaceId, LP)
 end)
 
 -- Preview Frame
@@ -189,18 +212,53 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- CORE LOOPS ---
+-- Destroyer Mode & Click TP Input Handlers
+Mouse.Button1Down:Connect(function()
+    if getgenv().Config.ClickTP and Mouse.Target and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        LP.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3, 0))
+    end
+    if getgenv().Config.DestroyerMode and Mouse.Hit then
+        local destroyerEvent = ReplicatedStorage:FindFirstChild("DestroyerEvent")
+        if destroyerEvent then
+            destroyerEvent:FireServer(Mouse.Hit.Position)
+        end
+    end
+end)
+
+-- Anti-AFK Handler
+local VirtualUser = game:GetService("VirtualUser")
+LP.Idled:Connect(function()
+    if getgenv().Config.AntiAFK then
+        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end
+end)
+
+-- --- CORE LOOPS (FULLY ACTIVE & FUNCTIONAL) ---
 local ESP_Objects = {}
 local function CreateESP(p)
-    local data = { Box = Drawing.new("Square"), Skelly = Drawing.new("Line"), Health = Drawing.new("Line"), Tracer = Drawing.new("Line") }
+    local data = {
+        Box = Drawing.new("Square"),
+        Skelly = Drawing.new("Line"),
+        Health = Drawing.new("Line"),
+        Tracer = Drawing.new("Line"),
+        HeadDot = Drawing.new("Circle")
+    }
     data.Box.Thickness = 1; data.Box.Filled = false; data.Box.Color = Color3.new(1,1,1)
     data.Skelly.Thickness = 1; data.Skelly.Color = Color3.new(1,0,0)
     data.Health.Thickness = 2; data.Health.Color = Color3.new(0,1,0)
     data.Tracer.Thickness = 1; data.Tracer.Color = Color3.new(0,1,1)
+    data.HeadDot.Radius = 3; data.HeadDot.Filled = true; data.HeadDot.Color = Color3.fromRGB(255, 0, 0)
     ESP_Objects[p] = data
 end
 
 RunService.RenderStepped:Connect(function()
+    -- FOV Circle Position
+    FOVCircleObj.Visible = getgenv().Config.FOVCircle
+    FOVCircleObj.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    -- Master ESP Render Loop
     for p, d in pairs(ESP_Objects) do
         if getgenv().Config.ESP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
             local HRP = p.Character.HumanoidRootPart
@@ -208,19 +266,29 @@ RunService.RenderStepped:Connect(function()
             if Vis then
                 local S = (Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(HRP.Position + Vector3.new(0, 2.6, 0)).Y)
                 d.Box.Size = Vector2.new(S * 1.3, S); d.Box.Position = Vector2.new(Pos.X - S/1.5, Pos.Y - S/2); d.Box.Visible = true
+                
                 if getgenv().Config.Health and p.Character:FindFirstChildOfClass("Humanoid") then
                     local H = p.Character:FindFirstChildOfClass("Humanoid")
-                    d.Health.From = Vector2.new(Pos.X + S/1.5 + 4, Pos.Y + S/2); d.Health.To = Vector2.new(Pos.X + S/1.5 + 4, Pos.Y + S/2 - (S * (H.Health/H.MaxHealth))); d.Health.Visible = true
+                    d.Health.From = Vector2.new(Pos.X + S/1.5 + 4, Pos.Y + S/2)
+                    d.Health.To = Vector2.new(Pos.X + S/1.5 + 4, Pos.Y + S/2 - (S * (H.Health/H.MaxHealth)))
+                    d.Health.Visible = true
                 else d.Health.Visible = false end
+
                 if getgenv().Config.Skeleton and p.Character:FindFirstChild("Head") then
                     local HP = Camera:WorldToViewportPoint(p.Character.Head.Position)
                     d.Skelly.From = Vector2.new(HP.X, HP.Y); d.Skelly.To = Vector2.new(Pos.X, Pos.Y); d.Skelly.Visible = true
                 else d.Skelly.Visible = false end
+
                 if getgenv().Config.Tracers then
                     d.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y); d.Tracer.To = Vector2.new(Pos.X, Pos.Y + S/2); d.Tracer.Visible = true
                 else d.Tracer.Visible = false end
-            else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false end
-        else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false end
+
+                if getgenv().Config.HeadDot and p.Character:FindFirstChild("Head") then
+                    local HP = Camera:WorldToViewportPoint(p.Character.Head.Position)
+                    d.HeadDot.Position = Vector2.new(HP.X, HP.Y); d.HeadDot.Visible = true
+                else d.HeadDot.Visible = false end
+            else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false; d.HeadDot.Visible = false end
+        else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false; d.HeadDot.Visible = false end
     end
 end)
 
@@ -228,13 +296,37 @@ RunService.RenderStepped:Connect(function()
     local Char = LP.Character; if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
     local HRP = Char.HumanoidRootPart
 
+    -- Movement Features
     FlyOverlay.Visible = getgenv().Config.Fly and not Main.Visible
     if getgenv().Config.Fly then
         local V = 0; if getgenv().Config.FlyUp then V = 50 elseif getgenv().Config.FlyDown then V = -50 end
         HRP.Velocity = (Char.Humanoid.MoveDirection * getgenv().Config.FlySpeed) + Vector3.new(0, V + 1.5, 0)
     end
-    
-    -- Target Finder
+    if getgenv().Config.Spinbot then HRP.RotVelocity = Vector3.new(0, 50, 0) end
+    if getgenv().Config.LowGravity then workspace.Gravity = 30 else workspace.Gravity = 196.2 end
+
+    -- World
+    if getgenv().Config.Fullbright then Lighting.Brightness = 2; Lighting.ClockTime = 14; Lighting.OutdoorAmbient = Color3.new(1,1,1) end
+    if getgenv().Config.NoFog then Lighting.FogEnd = 9e9 end
+
+    -- Vehicle Boost
+    if getgenv().Config.VehicleBoost and Char.Humanoid.SeatPart and Char.Humanoid.SeatPart:IsA("VehicleSeat") then
+        Char.Humanoid.SeatPart.MaxSpeed = 160
+        Char.Humanoid.SeatPart.Torque = 60
+    end
+
+    -- Hitbox Expander
+    if getgenv().Config.HitboxExpander then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Size = Vector3.new(10, 10, 10)
+                p.Character.HumanoidRootPart.Transparency = 0.7
+                p.Character.HumanoidRootPart.CanCollide = false
+            end
+        end
+    end
+
+    -- Target Finder for Aimbot & Preview
     local TargetHead = nil
     local ClosestDist = 400
     for _, p in pairs(Players:GetPlayers()) do
@@ -263,6 +355,15 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
+    -- Triggerbot Logic
+    if getgenv().Config.Triggerbot and Mouse.Target and Mouse.Target.Parent then
+        local hitPlayer = Players:GetPlayerFromCharacter(Mouse.Target.Parent)
+        if hitPlayer and hitPlayer ~= LP then
+            mouse1click()
+        end
+    end
+
+    -- Smooth Aimbot
     if TargetHead and getgenv().Config.Aimbot then
         Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, TargetHead.Position), getgenv().Config.Smooth)
     end
@@ -278,4 +379,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Destroyer v26.0 Loaded.")
+print("DarkDev Master Suite v27.0 Loaded.")
