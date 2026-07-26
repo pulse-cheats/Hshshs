@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - MASTER SUITE v29.0 (FIXED ESP & REBUILT DESTROYER)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v30.0
     Architect: Rool Machine
-    Status: ALL FEATURES FULLY STABLE & FUNCTIONAL
+    Features: Combat, Visuals, Movement, RP Utils, Skoupes Auto-Farm / Cleaning Bot
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -27,25 +27,81 @@ getgenv().Config = {
     ESP = false, Skeleton = true, Health = true, Tracers = true, HeadDot = false,
     -- MOVEMENT
     Fly = false, Noclip = false, SpeedActive = false, InfJump = false,
-    -- RP UTILS & WORLD
-    DestroyerMode = false, VehicleBoost = false, InfStamina = false, ClickTP = false,
+    -- RP UTILS & AUTOMATION
+    SkoupesBot = false, DestroyerMode = false, VehicleBoost = false, InfStamina = false, ClickTP = false,
     Fullbright = false, AntiAFK = false,
     -- SETTINGS
     FlySpeed = 50, FlyUp = false, FlyDown = false, Smooth = 0.15,
     InjectTime = "Not Injected"
 }
 
-local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v29_Master"
+-- --- SKOUPES WAYPOINTS (FROM YOUR COORDINATES) ---
+local SkoupesWaypoints = {
+    Vector3.new(206.84, 3.40, -114.71),
+    Vector3.new(194.27, 3.40, -110.15),
+    Vector3.new(189.54, 3.40, -119.38),
+    Vector3.new(184.81, 3.40, -128.60),
+    Vector3.new(179.91, 3.40, -138.16),
+    Vector3.new(175.01, 3.40, -147.72),
+    Vector3.new(170.11, 3.40, -157.28),
+    Vector3.new(165.21, 3.40, -166.83),
+    Vector3.new(168.17, 3.40, -170.19),
+    Vector3.new(171.13, 3.40, -173.54),
+    Vector3.new(176.03, 3.40, -163.98),
+    Vector3.new(180.93, 3.40, -154.43),
+    Vector3.new(185.83, 3.40, -144.87),
+    Vector3.new(190.73, 3.40, -135.31),
+    Vector3.new(195.46, 3.40, -126.09),
+    Vector3.new(200.19, 3.40, -116.86),
+    Vector3.new(205.13, 3.40, -118.65),
+    Vector3.new(200.40, 3.40, -127.87),
+    Vector3.new(195.67, 3.40, -137.10),
+    Vector3.new(190.77, 3.40, -146.66),
+    Vector3.new(185.87, 3.40, -156.21),
+    Vector3.new(180.97, 3.40, -165.77),
+    Vector3.new(176.07, 3.40, -175.33),
+    Vector3.new(179.03, 3.40, -178.68),
+    Vector3.new(181.99, 3.40, -182.04),
+    Vector3.new(186.89, 3.40, -172.48),
+    Vector3.new(191.79, 3.40, -162.92),
+    Vector3.new(196.69, 3.40, -153.37),
+    Vector3.new(201.59, 3.40, -143.81),
+    Vector3.new(206.32, 3.40, -134.58),
+    Vector3.new(211.05, 3.40, -125.36),
+    Vector3.new(212.85, 3.40, -128.85),
+    Vector3.new(208.12, 3.40, -138.08),
+    Vector3.new(203.39, 3.40, -147.30),
+    Vector3.new(198.49, 3.40, -156.86),
+    Vector3.new(193.59, 3.40, -166.41),
+    Vector3.new(188.69, 3.40, -175.97),
+    Vector3.new(183.79, 3.40, -185.53),
+    Vector3.new(186.75, 3.40, -188.88),
+    Vector3.new(189.71, 3.40, -192.24),
+    Vector3.new(194.61, 3.40, -182.68),
+    Vector3.new(199.51, 3.40, -173.12),
+    Vector3.new(204.41, 3.40, -163.57),
+    Vector3.new(209.31, 3.40, -154.01),
+    Vector3.new(214.04, 3.40, -144.78),
+    Vector3.new(218.77, 3.40, -135.56),
+    Vector3.new(220.56, 3.40, -139.05),
+    Vector3.new(215.83, 3.40, -148.27),
+    Vector3.new(211.10, 3.40, -157.50),
+    Vector3.new(206.20, 3.40, -167.05),
+    Vector3.new(201.30, 3.40, -176.61),
+    Vector3.new(196.40, 3.40, -186.17),
+    Vector3.new(191.50, 3.40, -195.73),
+    Vector3.new(194.46, 3.40, -199.08),
+    Vector3.new(197.42, 3.40, -202.44),
+    Vector3.new(202.32, 3.40, -192.88),
+    Vector3.new(207.22, 3.40, -183.32),
+    Vector3.new(212.12, 3.40, -173.77),
+    Vector3.new(217.02, 3.40, -164.21),
+    Vector3.new(221.75, 3.40, -154.98),
+    Vector3.new(226.48, 3.40, -145.76)
+}
 
--- Ensure DestroyerEvent Exists
-local DestroyerEvent = ReplicatedStorage:FindFirstChild("DestroyerEvent")
-if not DestroyerEvent then
-    pcall(function()
-        DestroyerEvent = Instance.new("RemoteEvent", ReplicatedStorage)
-        DestroyerEvent.Name = "DestroyerEvent"
-    end)
-end
+local SG = Instance.new("ScreenGui", CoreGui)
+SG.Name = "DarkDev_v30_Skoupes"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -54,7 +110,7 @@ Instance.new("UICorner", InjectorFrame)
 local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v29"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
+InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v30"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
 InjectBtn.Size = UDim2.new(0.8, 0, 0, 38); InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
@@ -172,7 +228,8 @@ AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
 
--- 4. RP UTILS
+-- 4. RP UTILS (With Skoupes Auto-Farm)
+AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
 AddToggle(Col4, "Destroyer", "DestroyerMode")
 AddToggle(Col4, "Click TP", "ClickTP")
 AddToggle(Col4, "Car Boost", "VehicleBoost")
@@ -207,39 +264,51 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- INPUT HANDLERS (CLICK TP & DESTROYER WITH DAMAGE) ---
+-- --- AUTOMATED SKOUPES BOT TASK THREAD ---
+task.spawn(function()
+    while true do
+        task.wait(0.12) -- Screen Click Delay Interval
+        
+        if getgenv().Config.SkoupesBot then
+            -- 1. Auto Click Center Screen
+            pcall(function()
+                mouse1click()
+            end)
+
+            -- 2. Auto Walk to Waypoints Loop
+            local Char = LP.Character
+            if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
+                local Hum = Char.Humanoid
+                for _, waypoint in ipairs(SkoupesWaypoints) do
+                    if not getgenv().Config.SkoupesBot then break end
+                    
+                    Hum:MoveTo(waypoint)
+                    
+                    -- Wait until reached waypoint or timeout
+                    local startTime = tick()
+                    repeat
+                        task.wait(0.1)
+                        pcall(function() mouse1click() end)
+                    until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 4 or (tick() - startTime) > 5 or not getgenv().Config.SkoupesBot
+                end
+            end
+        end
+    end
+end)
+
+-- --- INPUT HANDLERS (CLICK TP & DESTROYER) ---
 local function HandleActionAtPosition(targetPos)
     if not targetPos then return end
     
-    -- Click TP Logic
     if getgenv().Config.ClickTP and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
         LP.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
     end
     
-    -- Destroyer Mode Logic (Server Event + Local Damage Validation)
     if getgenv().Config.DestroyerMode then
         local event = ReplicatedStorage:FindFirstChild("DestroyerEvent")
-        if event then
-            event:FireServer(targetPos)
-        end
-        
-        -- Explosion Visual
+        if event then event:FireServer(targetPos) end
         local exp = Instance.new("Explosion")
-        exp.Position = targetPos
-        exp.BlastRadius = 12
-        exp.BlastPressure = 300000
-        
-        -- Client-side Local Damage Fallback
-        exp.Hit:Connect(function(part, distance)
-            if part and part.Parent and part.Parent:FindFirstChildOfClass("Humanoid") then
-                local hum = part.Parent:FindFirstChildOfClass("Humanoid")
-                local p = Players:GetPlayerFromCharacter(part.Parent)
-                if p ~= LP then
-                    hum:TakeDamage(40)
-                end
-            end
-        end)
-        exp.Parent = workspace
+        exp.Position = targetPos; exp.BlastRadius = 12; exp.Parent = workspace
     end
 end
 
@@ -254,88 +323,41 @@ UIS.TouchTap:Connect(function(touchPositions, gameProcessed)
     if raycastResult then HandleActionAtPosition(raycastResult.Position) end
 end)
 
--- --- ROBUST ESP ENGINE (REBUILT TO FIX BUGS) ---
-local ESP_Cache = {}
-
-local function ClearESP(p)
-    if ESP_Cache[p] then
-        for _, obj in pairs(ESP_Cache[p]) do
-            pcall(function() obj:Remove() end)
-        end
-        ESP_Cache[p] = nil
-    end
-end
-
-local function GetOrCreateESP(p)
-    if not ESP_Cache[p] then
-        ESP_Cache[p] = {
-            Box = Drawing.new("Square"),
-            Skelly = Drawing.new("Line"),
-            Health = Drawing.new("Line"),
-            Tracer = Drawing.new("Line")
-        }
-        ESP_Cache[p].Box.Thickness = 1; ESP_Cache[p].Box.Filled = false; ESP_Cache[p].Box.Color = Color3.new(1,1,1)
-        ESP_Cache[p].Skelly.Thickness = 1; ESP_Cache[p].Skelly.Color = Color3.new(1,0,0)
-        ESP_Cache[p].Health.Thickness = 2; ESP_Cache[p].Health.Color = Color3.new(0,1,0)
-        ESP_Cache[p].Tracer.Thickness = 1; ESP_Cache[p].Tracer.Color = Color3.new(0,1,1)
-    end
-    return ESP_Cache[p]
+-- --- CORE ESP & GAME LOOPS ---
+local ESP_Objects = {}
+local function CreateESP(p)
+    local data = { Box = Drawing.new("Square"), Skelly = Drawing.new("Line"), Health = Drawing.new("Line"), Tracer = Drawing.new("Line") }
+    data.Box.Thickness = 1; data.Box.Filled = false; data.Box.Color = Color3.new(1,1,1)
+    data.Skelly.Thickness = 1; data.Skelly.Color = Color3.new(1,0,0)
+    data.Health.Thickness = 2; data.Health.Color = Color3.new(0,1,0)
+    data.Tracer.Thickness = 1; data.Tracer.Color = Color3.new(0,1,1)
+    ESP_Objects[p] = data
 end
 
 RunService.RenderStepped:Connect(function()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LP then
-            if getgenv().Config.ESP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character.Humanoid.Health > 0 then
-                local HRP = p.Character.HumanoidRootPart
-                local Pos, Vis = Camera:WorldToViewportPoint(HRP.Position)
-                local d = GetOrCreateESP(p)
-                
-                if Vis then
-                    local Top = Camera:WorldToViewportPoint(HRP.Position + Vector3.new(0, 3, 0))
-                    local Bottom = Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0, 3.5, 0))
-                    local Height = math.abs(Top.Y - Bottom.Y)
-                    local Width = Height * 0.65
-
-                    -- Box
-                    d.Box.Size = Vector2.new(Width, Height)
-                    d.Box.Position = Vector2.new(Pos.X - Width/2, Pos.Y - Height/2)
-                    d.Box.Visible = true
-
-                    -- Health Bar (Right Side)
-                    if getgenv().Config.Health then
-                        local hum = p.Character:FindFirstChildOfClass("Humanoid")
-                        local hpRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-                        d.Health.From = Vector2.new(Pos.X + Width/2 + 4, Pos.Y + Height/2)
-                        d.Health.To = Vector2.new(Pos.X + Width/2 + 4, Pos.Y + Height/2 - (Height * hpRatio))
-                        d.Health.Color = Color3.fromRGB(255 * (1 - hpRatio), 255 * hpRatio, 0)
-                        d.Health.Visible = true
-                    else d.Health.Visible = false end
-
-                    -- Skeleton (Red Line to Head)
-                    if getgenv().Config.Skeleton and p.Character:FindFirstChild("Head") then
-                        local HP = Camera:WorldToViewportPoint(p.Character.Head.Position)
-                        d.Skelly.From = Vector2.new(HP.X, HP.Y); d.Skelly.To = Vector2.new(Pos.X, Pos.Y); d.Skelly.Visible = true
-                    else d.Skelly.Visible = false end
-
-                    -- Tracers
-                    if getgenv().Config.Tracers then
-                        d.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                        d.Tracer.To = Vector2.new(Pos.X, Pos.Y + Height/2)
-                        d.Tracer.Visible = true
-                    else d.Tracer.Visible = false end
-                else
-                    d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false
-                end
-            else
-                ClearESP(p)
-            end
-        end
+    for p, d in pairs(ESP_Objects) do
+        if getgenv().Config.ESP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = p.Character.HumanoidRootPart
+            local Pos, Vis = Camera:WorldToViewportPoint(HRP.Position)
+            if Vis then
+                local S = (Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(HRP.Position + Vector3.new(0, 2.6, 0)).Y)
+                d.Box.Size = Vector2.new(S * 1.3, S); d.Box.Position = Vector2.new(Pos.X - S/1.5, Pos.Y - S/2); d.Box.Visible = true
+                if getgenv().Config.Health and p.Character:FindFirstChildOfClass("Humanoid") then
+                    local H = p.Character:FindFirstChildOfClass("Humanoid")
+                    d.Health.From = Vector2.new(Pos.X + S/1.5 + 4, Pos.Y + S/2); d.Health.To = Vector2.new(Pos.X + S/1.5 + 4, Pos.Y + S/2 - (S * (H.Health/H.MaxHealth))); d.Health.Visible = true
+                else d.Health.Visible = false end
+                if getgenv().Config.Skeleton and p.Character:FindFirstChild("Head") then
+                    local HP = Camera:WorldToViewportPoint(p.Character.Head.Position)
+                    d.Skelly.From = Vector2.new(HP.X, HP.Y); d.Skelly.To = Vector2.new(Pos.X, Pos.Y); d.Skelly.Visible = true
+                else d.Skelly.Visible = false end
+                if getgenv().Config.Tracers then
+                    d.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y); d.Tracer.To = Vector2.new(Pos.X, Pos.Y + S/2); d.Tracer.Visible = true
+                else d.Tracer.Visible = false end
+            else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false end
+        else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false end
     end
 end)
 
-Players.PlayerRemoving:Connect(ClearESP)
-
--- --- CORE GAME LOOPS ---
 RunService.RenderStepped:Connect(function()
     local Char = LP.Character; if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
     local HRP = Char.HumanoidRootPart
@@ -390,4 +412,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Master Suite v29.0 Loaded.")
+print("DarkDev Skoupes Suite v30.0 Loaded.")
