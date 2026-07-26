@@ -14,6 +14,7 @@ local Market = game:GetService("MarketplaceService")
 local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
 local Mouse = LP:GetMouse()
@@ -119,6 +120,42 @@ local function IsPointInsideBoundary(pt)
     end
     return inside
 end
+
+-- Click function for bottom center of screen
+local function ClickBottomCenter()
+    pcall(function()
+        local vp = Camera.ViewportSize
+        VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y * 0.82, 0, true, game, 0)
+        task.wait(0.02)
+        VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y * 0.82, 0, false, game, 0)
+    end)
+    pcall(function() mouse1click() end)
+end
+
+-- Enforce player staying strictly inside BoundaryPolygon (cannot walk out)
+RunService.Heartbeat:Connect(function()
+    if getgenv().Config.SkoupesBot and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LP.Character.HumanoidRootPart
+        local pos = hrp.Position
+        if not IsPointInsideBoundary(pos) then
+            local closest = pos
+            local minD = math.huge
+            for i = 1, #BoundaryPolygon do
+                local p1 = BoundaryPolygon[i]
+                local p2 = BoundaryPolygon[(i % #BoundaryPolygon) + 1]
+                local l2 = (p2 - p1).Magnitude ^ 2
+                local t = l2 > 0 and math.clamp(((pos.X - p1.X)*(p2.X - p1.X) + (pos.Z - p1.Y)*(p2.Y - p1.Y)) / l2, 0, 1) or 0
+                local proj = p1 + t * (p2 - p1)
+                local d = (Vector2.new(pos.X, pos.Z) - proj).Magnitude
+                if d < minD then minD = d; closest = proj end
+            end
+            local center = Vector2.new(195, -160)
+            local dir = (center - closest).Unit * 0.5
+            hrp.CFrame = CFrame.new(closest.X + dir.X, pos.Y, closest.Y + dir.Y)
+            hrp.Velocity = Vector3.new(0, 0, 0)
+        end
+    end
+end)
 
 -- Filter Waypoints to ensure ALL are strictly INSIDE the boundary (Safety Buffer)
 local StrictWaypoints = {}
@@ -298,10 +335,8 @@ task.spawn(function()
         task.wait(0.12) -- Screen Click Delay Interval
         
         if getgenv().Config.SkoupesBot then
-            -- 1. Auto Click Center Screen
-            pcall(function()
-                mouse1click()
-            end)
+            -- 1. Auto Click Bottom Center Screen
+            ClickBottomCenter()
 
             -- 2. Auto Walk ONLY to Waypoints strictly INSIDE boundary
             local Char = LP.Character
@@ -317,7 +352,12 @@ task.spawn(function()
                         local startTime = tick()
                         repeat
                             task.wait(0.1)
-                            pcall(function() mouse1click() end)
+                            ClickBottomCenter()
+                            -- If stuck on wall, jump & re-trigger MoveTo
+                            if (tick() - startTime) > 2.0 and (Char.HumanoidRootPart.Position - waypoint).Magnitude > 4 then
+                                Hum.Jump = true
+                                Hum:MoveTo(waypoint)
+                            end
                         until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 3.5 or (tick() - startTime) > 4.5 or not getgenv().Config.SkoupesBot
                     end
                 end
