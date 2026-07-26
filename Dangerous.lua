@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v30.0
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v31.0
     Architect: Rool Machine
-    Features: Combat, Visuals, Movement, RP Utils, Skoupes Auto-Farm / Cleaning Bot
+    Features: Combat, Visuals, Movement, RP Utils, Skoupes Auto-Farm (Internal Waypoints Only)
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -35,16 +35,8 @@ getgenv().Config = {
     InjectTime = "Not Injected"
 }
 
--- --- SKOUPES WAYPOINTS (FROM YOUR COORDINATES) ---
+-- --- SKOUPES WAYPOINTS (INTERNAL CLEANING POINTS 9-61 EXCLUDING 1-8 BOUNDARY) ---
 local SkoupesWaypoints = {
-    Vector3.new(206.84, 3.40, -114.71),
-    Vector3.new(194.27, 3.40, -110.15),
-    Vector3.new(189.54, 3.40, -119.38),
-    Vector3.new(184.81, 3.40, -128.60),
-    Vector3.new(179.91, 3.40, -138.16),
-    Vector3.new(175.01, 3.40, -147.72),
-    Vector3.new(170.11, 3.40, -157.28),
-    Vector3.new(165.21, 3.40, -166.83),
     Vector3.new(168.17, 3.40, -170.19),
     Vector3.new(171.13, 3.40, -173.54),
     Vector3.new(176.03, 3.40, -163.98),
@@ -101,7 +93,7 @@ local SkoupesWaypoints = {
 }
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v30_Skoupes"
+SG.Name = "DarkDev_v31_Skoupes"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -110,7 +102,7 @@ Instance.new("UICorner", InjectorFrame)
 local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v30"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
+InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v31"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
 InjectBtn.Size = UDim2.new(0.8, 0, 0, 38); InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
@@ -264,7 +256,7 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- AUTOMATED SKOUPES BOT TASK THREAD ---
+-- --- AUTOMATED SKOUPES BOT TASK THREAD (ONLY INTERNAL WAYPOINTS) ---
 task.spawn(function()
     while true do
         task.wait(0.12) -- Screen Click Delay Interval
@@ -275,7 +267,7 @@ task.spawn(function()
                 mouse1click()
             end)
 
-            -- 2. Auto Walk to Waypoints Loop
+            -- 2. Auto Walk to Waypoints Loop (Only internal points)
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
                 local Hum = Char.Humanoid
@@ -412,4 +404,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Skoupes Suite v30.0 Loaded.")
+print("DarkDev Skoupes Suite v31.0 Loaded.")
