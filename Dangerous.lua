@@ -1,7 +1,6 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (Dynamic 10x5 Area)
     Architect: Rool Machine
-    Features: Combat, Visuals, Movement, RP Utils, Skoupes Auto-Farm (Strict Boundary Check)
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -21,99 +20,73 @@ local Mouse = LP:GetMouse()
 
 -- --- CONFIGURATION ---
 getgenv().Config = {
-    -- COMBAT
     Aimbot = false, SilentAim = false, Triggerbot = false, KillAura = false,
     NoRecoil = false, HitboxExpander = false,
-    -- VISUALS
     ESP = false, Skeleton = true, Health = true, Tracers = true, HeadDot = false,
-    -- MOVEMENT
     Fly = false, Noclip = false, SpeedActive = false, InfJump = false,
-    -- RP UTILS & AUTOMATION
     SkoupesBot = false, DestroyerMode = false, VehicleBoost = false, InfStamina = false, ClickTP = false,
     Fullbright = false, AntiAFK = false,
-    -- SETTINGS
     FlySpeed = 50, FlyUp = false, FlyDown = false, Smooth = 0.15,
     InjectTime = "Not Injected"
 }
 
--- --- BOUNDARY POLYGON (EXTREME OUTLINE) ---
-local BoundaryPolygon = {
-    Vector2.new(228.32, -148.16),
-    Vector2.new(194.27, -110.15),
-    Vector2.new(165.21, -166.83),
-    Vector2.new(181.99, -182.04),
-    Vector2.new(183.79, -185.53),
-    Vector2.new(189.71, -192.24),
-    Vector2.new(191.50, -195.73),
-    Vector2.new(197.42, -202.44)
-}
+-- --- DYNAMIC 10x5 BOUNDARY & WAYPOINT GENERATOR ---
+local DynamicBoundary = {}
+local DynamicWaypoints = {}
+local StartCenterPos = nil
 
--- --- CLEANING WAYPOINTS (ROUTE INSIDE THE AREA) ---
-local SkoupesWaypoints = {
-    Vector3.new(168.17, 3.40, -170.19),
-    Vector3.new(171.13, 3.40, -173.54),
-    Vector3.new(176.03, 3.40, -163.98),
-    Vector3.new(180.93, 3.40, -154.43),
-    Vector3.new(185.83, 3.40, -144.87),
-    Vector3.new(190.73, 3.40, -135.31),
-    Vector3.new(195.46, 3.40, -126.09),
-    Vector3.new(200.19, 3.40, -116.86),
-    Vector3.new(205.13, 3.40, -118.65),
-    Vector3.new(200.40, 3.40, -127.87),
-    Vector3.new(195.67, 3.40, -137.10),
-    Vector3.new(190.77, 3.40, -146.66),
-    Vector3.new(185.87, 3.40, -156.21),
-    Vector3.new(180.97, 3.40, -165.77),
-    Vector3.new(176.07, 3.40, -175.33),
-    Vector3.new(179.03, 3.40, -178.68),
-    Vector3.new(181.99, 3.40, -182.04),
-    Vector3.new(186.89, 3.40, -172.48),
-    Vector3.new(191.79, 3.40, -162.92),
-    Vector3.new(196.69, 3.40, -153.37),
-    Vector3.new(201.59, 3.40, -143.81),
-    Vector3.new(206.32, 3.40, -134.58),
-    Vector3.new(211.05, 3.40, -125.36),
-    Vector3.new(212.85, 3.40, -128.85),
-    Vector3.new(208.12, 3.40, -138.08),
-    Vector3.new(203.39, 3.40, -147.30),
-    Vector3.new(198.49, 3.40, -156.86),
-    Vector3.new(193.59, 3.40, -166.41),
-    Vector3.new(188.69, 3.40, -175.97),
-    Vector3.new(183.79, 3.40, -185.53),
-    Vector3.new(186.75, 3.40, -188.88),
-    Vector3.new(189.71, 3.40, -192.24),
-    Vector3.new(194.61, 3.40, -182.68),
-    Vector3.new(199.51, 3.40, -173.12),
-    Vector3.new(204.41, 3.40, -163.57),
-    Vector3.new(209.31, 3.40, -154.01),
-    Vector3.new(214.04, 3.40, -144.78),
-    Vector3.new(218.77, 3.40, -135.56),
-    Vector3.new(220.56, 3.40, -139.05),
-    Vector3.new(215.83, 3.40, -148.27),
-    Vector3.new(211.10, 3.40, -157.50),
-    Vector3.new(206.20, 3.40, -167.05),
-    Vector3.new(201.30, 3.40, -176.61),
-    Vector3.new(196.40, 3.40, -186.17),
-    Vector3.new(191.50, 3.40, -195.73),
-    Vector3.new(194.46, 3.40, -199.08),
-    Vector3.new(197.42, 3.40, -202.44),
-    Vector3.new(202.32, 3.40, -192.88),
-    Vector3.new(207.22, 3.40, -183.32),
-    Vector3.new(212.12, 3.40, -173.77),
-    Vector3.new(217.02, 3.40, -164.21),
-    Vector3.new(221.75, 3.40, -154.98),
-    Vector3.new(226.48, 3.40, -145.76)
-}
+local function Generate10x5Area()
+    local Char = LP.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
+    
+    local hrp = Char.HumanoidRootPart
+    local startCF = hrp.CFrame
+    StartCenterPos = startCF.Position
+    
+    DynamicBoundary = {}
+    DynamicWaypoints = {}
+    
+    -- 10x5 Rectangle relative to where player stood when pressing button
+    local halfW = 2.5
+    local len = 10
+    
+    local p1 = (startCF * Vector3.new(-halfW, 0, 0))
+    local p2 = (startCF * Vector3.new(halfW, 0, 0))
+    local p3 = (startCF * Vector3.new(halfW, 0, len))
+    local p4 = (startCF * Vector3.new(-halfW, 0, len))
+    
+    DynamicBoundary = {
+        Vector2.new(p1.X, p1.Z),
+        Vector2.new(p2.X, p2.Z),
+        Vector2.new(p3.X, p3.Z),
+        Vector2.new(p4.X, p4.Z)
+    }
+    
+    -- Pattern waypoints to cover 10x5 box
+    local forward = true
+    for x = -halfW, halfW, 1.25 do
+        if forward then
+            for z = 0, len, 2 do
+                table.insert(DynamicWaypoints, (startCF * Vector3.new(x, 0, z)).Position)
+            end
+        else
+            for z = len, 0, -2 do
+                table.insert(DynamicWaypoints, (startCF * Vector3.new(x, 0, z)).Position)
+            end
+        end
+        forward = not forward
+    end
+end
 
--- Ray-Casting Algorithm to check if Point (X, Z) is strictly Inside Polygon
+-- Check if Point (X, Z) is inside DynamicBoundary
 local function IsPointInsideBoundary(pt)
+    if #DynamicBoundary == 0 then return true end
     local x, z = pt.X, pt.Z
     local inside = false
-    local j = #BoundaryPolygon
-    for i = 1, #BoundaryPolygon do
-        local xi, zi = BoundaryPolygon[i].X, BoundaryPolygon[i].Y
-        local xj, zj = BoundaryPolygon[j].X, BoundaryPolygon[j].Y
-        
+    local j = #DynamicBoundary
+    for i = 1, #DynamicBoundary do
+        local xi, zi = DynamicBoundary[i].X, DynamicBoundary[i].Y
+        local xj, zj = DynamicBoundary[j].X, DynamicBoundary[j].Y
         local intersect = ((zi > z) ~= (zj > z)) and (x < (xj - xi) * (z - zi) / (zj - zi + 0.00001) + xi)
         if intersect then inside = not inside end
         j = i
@@ -121,52 +94,32 @@ local function IsPointInsideBoundary(pt)
     return inside
 end
 
--- Click function for bottom center of screen
-local function ClickBottomCenter()
+-- Click Center of Screen
+local function ClickCenterScreen()
     pcall(function()
         local vp = Camera.ViewportSize
-        VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y * 0.82, 0, true, game, 0)
+        VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y / 2, 0, true, game, 0)
         task.wait(0.02)
-        VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y * 0.82, 0, false, game, 0)
+        VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y / 2, 0, false, game, 0)
     end)
     pcall(function() mouse1click() end)
 end
 
--- Enforce player staying strictly inside BoundaryPolygon (cannot walk out)
+-- Strictly keep player inside dynamic 10x5 boundary
 RunService.Heartbeat:Connect(function()
-    if getgenv().Config.SkoupesBot and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+    if getgenv().Config.SkoupesBot and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") and #DynamicBoundary > 0 then
         local hrp = LP.Character.HumanoidRootPart
         local pos = hrp.Position
-        if not IsPointInsideBoundary(pos) then
-            local closest = pos
-            local minD = math.huge
-            for i = 1, #BoundaryPolygon do
-                local p1 = BoundaryPolygon[i]
-                local p2 = BoundaryPolygon[(i % #BoundaryPolygon) + 1]
-                local l2 = (p2 - p1).Magnitude ^ 2
-                local t = l2 > 0 and math.clamp(((pos.X - p1.X)*(p2.X - p1.X) + (pos.Z - p1.Y)*(p2.Y - p1.Y)) / l2, 0, 1) or 0
-                local proj = p1 + t * (p2 - p1)
-                local d = (Vector2.new(pos.X, pos.Z) - proj).Magnitude
-                if d < minD then minD = d; closest = proj end
-            end
-            local center = Vector2.new(195, -160)
-            local dir = (center - closest).Unit * 0.5
-            hrp.CFrame = CFrame.new(closest.X + dir.X, pos.Y, closest.Y + dir.Y)
+        if not IsPointInsideBoundary(pos) and StartCenterPos then
+            local dir = (StartCenterPos - pos).Unit
+            hrp.CFrame = CFrame.new(pos + dir * 1.5)
             hrp.Velocity = Vector3.new(0, 0, 0)
         end
     end
 end)
 
--- Filter Waypoints to ensure ALL are strictly INSIDE the boundary (Safety Buffer)
-local StrictWaypoints = {}
-for _, wp in ipairs(SkoupesWaypoints) do
-    if IsPointInsideBoundary(wp) then
-        table.insert(StrictWaypoints, wp)
-    end
-end
-
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v33_Skoupes"
+SG.Name = "DarkDev_v33_Dynamic"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -293,8 +246,12 @@ AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
 
--- 4. RP UTILS (With Strict Skoupes Auto-Farm)
-AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
+-- 4. RP UTILS (With Dynamic 10x5 Auto-Farm)
+AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot", function(active)
+    if active then
+        Generate10x5Area()
+    end
+end)
 AddToggle(Col4, "Destroyer", "DestroyerMode")
 AddToggle(Col4, "Click TP", "ClickTP")
 AddToggle(Col4, "Car Boost", "VehicleBoost")
@@ -329,37 +286,34 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- AUTOMATED SKOUPES BOT TASK THREAD (STRICT BOUNDARY CHECKING) ---
+-- --- AUTOMATED SKOUPES BOT TASK THREAD (DYNAMIC 10x5 AREA) ---
 task.spawn(function()
     while true do
-        task.wait(0.12) -- Screen Click Delay Interval
+        task.wait(0.12)
         
         if getgenv().Config.SkoupesBot then
-            -- 1. Auto Click Bottom Center Screen
-            ClickBottomCenter()
+            ClickCenterScreen()
 
-            -- 2. Auto Walk ONLY to Waypoints strictly INSIDE boundary
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
                 local Hum = Char.Humanoid
-                for _, waypoint in ipairs(StrictWaypoints) do
+                if #DynamicWaypoints == 0 then
+                    Generate10x5Area()
+                end
+                
+                for _, waypoint in ipairs(DynamicWaypoints) do
                     if not getgenv().Config.SkoupesBot then break end
                     
-                    -- Additional runtime safety check
-                    if IsPointInsideBoundary(waypoint) then
-                        Hum:MoveTo(waypoint)
-                        
-                        local startTime = tick()
-                        repeat
-                            task.wait(0.1)
-                            ClickBottomCenter()
-                            -- If stuck on wall, jump & re-trigger MoveTo
-                            if (tick() - startTime) > 2.0 and (Char.HumanoidRootPart.Position - waypoint).Magnitude > 4 then
-                                Hum.Jump = true
-                                Hum:MoveTo(waypoint)
-                            end
-                        until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 3.5 or (tick() - startTime) > 4.5 or not getgenv().Config.SkoupesBot
-                    end
+                    Hum:MoveTo(waypoint)
+                    local startTime = tick()
+                    repeat
+                        task.wait(0.1)
+                        ClickCenterScreen()
+                        if (tick() - startTime) > 2.0 and (Char.HumanoidRootPart.Position - waypoint).Magnitude > 3 then
+                            Hum.Jump = true
+                            Hum:MoveTo(waypoint)
+                        end
+                    until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 2.5 or (tick() - startTime) > 3.5 or not getgenv().Config.SkoupesBot
                 end
             end
         end
@@ -482,4 +436,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Skoupes Suite v33.0 Loaded.")
+print("DarkDev Dynamic Suite v33.0 Loaded.")
