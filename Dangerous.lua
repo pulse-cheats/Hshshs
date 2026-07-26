@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v32.0
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0
     Architect: Rool Machine
-    Features: Combat, Visuals, Movement, RP Utils, Skoupes Auto-Farm (Updated Routes)
+    Features: Combat, Visuals, Movement, RP Utils, Skoupes Auto-Farm (Strict Boundary Check)
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -35,16 +35,16 @@ getgenv().Config = {
     InjectTime = "Not Injected"
 }
 
--- --- BOUNDARY SHAPE POINTS (OUTLINE) ---
-local BoundaryShape = {
-    Vector3.new(228.32, 3.40, -148.16),
-    Vector3.new(194.27, 3.40, -110.15),
-    Vector3.new(165.21, 3.40, -166.83),
-    Vector3.new(181.99, 3.40, -182.04),
-    Vector3.new(183.79, 3.40, -185.53),
-    Vector3.new(189.71, 3.40, -192.24),
-    Vector3.new(191.50, 3.40, -195.73),
-    Vector3.new(197.42, 3.40, -202.44)
+-- --- BOUNDARY POLYGON (EXTREME OUTLINE) ---
+local BoundaryPolygon = {
+    Vector2.new(228.32, -148.16),
+    Vector2.new(194.27, -110.15),
+    Vector2.new(165.21, -166.83),
+    Vector2.new(181.99, -182.04),
+    Vector2.new(183.79, -185.53),
+    Vector2.new(189.71, -192.24),
+    Vector2.new(191.50, -195.73),
+    Vector2.new(197.42, -202.44)
 }
 
 -- --- CLEANING WAYPOINTS (ROUTE INSIDE THE AREA) ---
@@ -104,8 +104,32 @@ local SkoupesWaypoints = {
     Vector3.new(226.48, 3.40, -145.76)
 }
 
+-- Ray-Casting Algorithm to check if Point (X, Z) is strictly Inside Polygon
+local function IsPointInsideBoundary(pt)
+    local x, z = pt.X, pt.Z
+    local inside = false
+    local j = #BoundaryPolygon
+    for i = 1, #BoundaryPolygon do
+        local xi, zi = BoundaryPolygon[i].X, BoundaryPolygon[i].Y
+        local xj, zj = BoundaryPolygon[j].X, BoundaryPolygon[j].Y
+        
+        local intersect = ((zi > z) ~= (zj > z)) and (x < (xj - xi) * (z - zi) / (zj - zi + 0.00001) + xi)
+        if intersect then inside = not inside end
+        j = i
+    end
+    return inside
+end
+
+-- Filter Waypoints to ensure ALL are strictly INSIDE the boundary (Safety Buffer)
+local StrictWaypoints = {}
+for _, wp in ipairs(SkoupesWaypoints) do
+    if IsPointInsideBoundary(wp) then
+        table.insert(StrictWaypoints, wp)
+    end
+end
+
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v32_Skoupes"
+SG.Name = "DarkDev_v33_Skoupes"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -114,7 +138,7 @@ Instance.new("UICorner", InjectorFrame)
 local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v32"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
+InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v33"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
 InjectBtn.Size = UDim2.new(0.8, 0, 0, 38); InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
@@ -232,7 +256,7 @@ AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
 
--- 4. RP UTILS (With Skoupes Auto-Farm)
+-- 4. RP UTILS (With Strict Skoupes Auto-Farm)
 AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
 AddToggle(Col4, "Destroyer", "DestroyerMode")
 AddToggle(Col4, "Click TP", "ClickTP")
@@ -268,7 +292,7 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- AUTOMATED SKOUPES BOT TASK THREAD ---
+-- --- AUTOMATED SKOUPES BOT TASK THREAD (STRICT BOUNDARY CHECKING) ---
 task.spawn(function()
     while true do
         task.wait(0.12) -- Screen Click Delay Interval
@@ -279,21 +303,23 @@ task.spawn(function()
                 mouse1click()
             end)
 
-            -- 2. Auto Walk to Waypoints Loop (Only internal cleaning points)
+            -- 2. Auto Walk ONLY to Waypoints strictly INSIDE boundary
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
                 local Hum = Char.Humanoid
-                for _, waypoint in ipairs(SkoupesWaypoints) do
+                for _, waypoint in ipairs(StrictWaypoints) do
                     if not getgenv().Config.SkoupesBot then break end
                     
-                    Hum:MoveTo(waypoint)
-                    
-                    -- Wait until reached waypoint or timeout
-                    local startTime = tick()
-                    repeat
-                        task.wait(0.1)
-                        pcall(function() mouse1click() end)
-                    until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 4 or (tick() - startTime) > 5 or not getgenv().Config.SkoupesBot
+                    -- Additional runtime safety check
+                    if IsPointInsideBoundary(waypoint) then
+                        Hum:MoveTo(waypoint)
+                        
+                        local startTime = tick()
+                        repeat
+                            task.wait(0.1)
+                            pcall(function() mouse1click() end)
+                        until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 3.5 or (tick() - startTime) > 4.5 or not getgenv().Config.SkoupesBot
+                    end
                 end
             end
         end
@@ -416,4 +442,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Skoupes Suite v32.0 Loaded.")
+print("DarkDev Skoupes Suite v33.0 Loaded.")
