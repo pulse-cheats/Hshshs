@@ -1,5 +1,5 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (Red Marker Target Scanner 100m)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (Bulletproof Mobile Auto-Walk & Marker Scanner)
     Architect: Rool Machine
 ]]
 
@@ -42,7 +42,7 @@ local function ClickCenterScreen()
 end
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v33_RedMarker"
+SG.Name = "DarkDev_v33_AutoWalk"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -169,7 +169,7 @@ AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
 
--- 4. RP UTILS (Red Marker Auto-Farm 100m)
+-- 4. RP UTILS
 AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
 AddToggle(Col4, "Destroyer", "DestroyerMode")
 AddToggle(Col4, "Click TP", "ClickTP")
@@ -205,105 +205,142 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- AUTOMATED SKOUPES BOT TASK THREAD (RED MARKER SCANNER - 100m RANGE) ---
-local MAX_MARKER_RANGE = 300 -- ~100 μέτρα εμβέλεια
+-- --- BULLETPROOF AUTO-WALK & RED MARKER SCANNER ---
+local MAX_MARKER_RANGE = 300 -- ~100 μέτρα
 
-local function GetClosestRedMarker()
+local SearchWaypoints = {}
+local currentSearchIdx = 1
+
+-- Function to physically move player to a target position reliably on mobile
+local function WalkToPosition(targetPos)
+    local Char = LP.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") or not Char:FindFirstChild("Humanoid") then return end
+    local hrp = Char.HumanoidRootPart
+    local hum = Char.Humanoid
+    
+    local targetFlat = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
+    local dist = (targetFlat - hrp.Position).Magnitude
+    if dist > 1.8 then
+        local dir = (targetFlat - hrp.Position).Unit
+        hum:Move(dir, false) -- Forced continuous directional movement (Fixes Mobile Auto-Walk)
+        hum:MoveTo(targetPos)
+        return false
+    else
+        hum:Move(Vector3.new(0, 0, 0), false)
+        return true
+    end
+end
+
+-- Scan ALL possible red markers, prompts, broom icons, touch interests in 100m
+local function FindNearestMarker()
     local Char = LP.Character
     if not Char or not Char:FindFirstChild("HumanoidRootPart") then return nil end
     local hrpPos = Char.HumanoidRootPart.Position
     
-    local closestPos = nil
-    local closestDist = MAX_MARKER_RANGE
+    local bestPos = nil
+    local minD = MAX_MARKER_RANGE
     
-    -- 1. Scan ProximityPrompts
-    for _, prompt in ipairs(workspace:GetDescendants()) do
-        if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-            local pos = prompt.Parent.Position
-            local dist = (hrpPos - pos).Magnitude
-            if dist <= MAX_MARKER_RANGE and dist < closestDist then
-                closestDist = dist
-                closestPos = pos
-            end
-        end
-    end
-    
-    -- 2. Scan BillboardGui / ImageLabel / Red Arrow Markers
-    if not closestPos then
-        for _, bg in ipairs(workspace:GetDescendants()) do
-            if bg:IsA("BillboardGui") and bg.Enabled and bg.Parent and bg.Parent:IsA("BasePart") then
-                local pos = bg.Parent.Position
-                local dist = (hrpPos - pos).Magnitude
-                if dist <= MAX_MARKER_RANGE and dist < closestDist then
-                    closestDist = dist
-                    closestPos = pos
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        pcall(function()
+            local pos = nil
+            local isMarker = false
+            
+            -- ProximityPrompt
+            if obj:IsA("ProximityPrompt") and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
+                isMarker = true
+                pos = obj.Parent.Position
+            -- TouchInterest / ClickDetector
+            elseif (obj:IsA("TouchTransmitter") or obj:IsA("ClickDetector")) and obj.Parent and obj.Parent:IsA("BasePart") then
+                isMarker = true
+                pos = obj.Parent.Position
+            -- BillboardGui / SurfaceGui
+            elseif (obj:IsA("BillboardGui") or obj:IsA("SurfaceGui")) and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
+                isMarker = true
+                pos = obj.Parent.Position
+            -- BasePart / MeshPart with Red Color or Job Name
+            elseif obj:IsA("BasePart") and obj.Transparency < 0.9 then
+                local c = obj.Color
+                local isRed = (c.R > 0.6 and c.G < 0.4 and c.B < 0.4) or (c.R > 0.7 and c.G < 0.5)
+                local n = string.lower(obj.Name)
+                local isJobName = string.find(n, "dust") or string.find(n, "dirt") or string.find(n, "trash") or 
+                                  string.find(n, "skoupa") or string.find(n, "clean") or string.find(n, "marker") or 
+                                  string.find(n, "spot") or string.find(n, "job") or string.find(n, "part")
+                if isRed or isJobName then
+                    isMarker = true
+                    pos = obj.Position
                 end
             end
-        end
-    end
-
-    -- 3. Scan Parts / Models named Dirt, Dust, Trash, Skoupa, Marker, Spot, Job
-    if not closestPos then
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") and v.Transparency < 1 then
-                local name = string.lower(v.Name)
-                if string.find(name, "dust") or string.find(name, "dirt") or string.find(name, "trash") or 
-                   string.find(name, "skoupa") or string.find(name, "clean") or string.find(name, "marker") or
-                   string.find(name, "spot") or string.find(name, "job") then
-                    local pos = v.Position
-                    local dist = (hrpPos - pos).Magnitude
-                    if dist <= MAX_MARKER_RANGE and dist < closestDist then
-                        closestDist = dist
-                        closestPos = pos
-                    end
+            
+            if isMarker and pos then
+                local d = (hrpPos - pos).Magnitude
+                if d <= MAX_MARKER_RANGE and d < minD and d > 0.5 then
+                    minD = d
+                    bestPos = pos
                 end
             end
-        end
+        end)
     end
     
-    return closestPos
+    return bestPos
 end
 
+local function GenerateSearchPatrol()
+    local Char = LP.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
+    local startCF = Char.HumanoidRootPart.CFrame
+    SearchWaypoints = {}
+    
+    local width, length = 10, 10
+    for x = -width, width, 5 do
+        for z = -length, length, 5 do
+            table.insert(SearchWaypoints, (startCF * Vector3.new(x, 0, z)).Position)
+        end
+    end
+end
+
+-- Main Auto-Farm Loop
 task.spawn(function()
     while true do
-        task.wait(0.1)
+        task.wait(0.05)
         
         if getgenv().Config.SkoupesBot then
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
-                local Hum = Char.Humanoid
-                local targetMarkerPos = GetClosestRedMarker()
+                -- 1. Look for Red Marker in 100m
+                local markerPos = FindNearestMarker()
                 
-                if targetMarkerPos then
-                    -- Πηγαίνει αυτόματα στο κόκκινο σημάδι
-                    Hum:MoveTo(targetMarkerPos)
+                if markerPos then
+                    -- Walk directly to marker using Humanoid:Move for guaranteed mobile walking
+                    local reached = WalkToPosition(markerPos)
+                    ClickCenterScreen()
                     
-                    local startTime = tick()
-                    repeat
-                        task.wait(0.08)
-                        ClickCenterScreen()
-                        
-                        -- Fire nearest ProximityPrompt automatically if close
+                    if (Char.HumanoidRootPart.Position - markerPos).Magnitude < 8 then
                         pcall(function()
-                            for _, prompt in ipairs(workspace:GetDescendants()) do
-                                if prompt:IsA("ProximityPrompt") and (prompt.Parent.Position - Char.HumanoidRootPart.Position).Magnitude < 10 then
-                                    fireproximityprompt(prompt)
+                            for _, p in ipairs(workspace:GetDescendants()) do
+                                if p:IsA("ProximityPrompt") and (p.Parent.Position - Char.HumanoidRootPart.Position).Magnitude < 10 then
+                                    fireproximityprompt(p)
                                 end
                             end
                         end)
-                        
-                        -- Unstick logic
-                        if (tick() - startTime) > 2.0 and (Char.HumanoidRootPart.Position - targetMarkerPos).Magnitude > 4 then
-                            Hum.Jump = true
-                            Hum:MoveTo(targetMarkerPos)
-                        end
-                    until (Char.HumanoidRootPart.Position - targetMarkerPos).Magnitude < 3.0 or (tick() - startTime) > 5.0 or not getgenv().Config.SkoupesBot
+                    end
                 else
-                    -- Αν δεν βρει σημάδι σε 100m, κάνει click και περιμένει να εμφανιστεί νέο
-                    ClickCenterScreen()
-                    task.wait(0.3)
+                    -- 2. Patrol 10x10 area to locate new spawns
+                    if #SearchWaypoints == 0 then GenerateSearchPatrol() end
+                    
+                    if #SearchWaypoints > 0 then
+                        local patPos = SearchWaypoints[currentSearchIdx] or SearchWaypoints[1]
+                        local reached = WalkToPosition(patPos)
+                        ClickCenterScreen()
+                        
+                        if reached then
+                            currentSearchIdx = (currentSearchIdx % #SearchWaypoints) + 1
+                            task.wait(0.1)
+                        end
+                    end
                 end
             end
+        else
+            SearchWaypoints = {}
         end
     end
 end)
@@ -424,4 +461,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev RedMarker Suite v33.0 Loaded.")
+print("DarkDev GreekRP AutoWalk Fixed Suite v33.0 Loaded.")
