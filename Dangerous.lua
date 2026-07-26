@@ -1,6 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (Bulletproof Mobile Auto-Walk & Marker Scanner)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (UPDATE FINAL)
     Architect: Rool Machine
+    Features: Combat (KillAura Pistol TP), Visuals, Movement (Legit Fly), RP Utils (Shift Skoupes, TP Player, Team Finder)
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -20,6 +21,7 @@ local Mouse = LP:GetMouse()
 
 -- --- CONFIGURATION ---
 getgenv().Config = {
+    LegitFly = false,
     Aimbot = false, SilentAim = false, Triggerbot = false, KillAura = false,
     NoRecoil = false, HitboxExpander = false,
     ESP = false, Skeleton = true, Health = true, Tracers = true, HeadDot = false,
@@ -42,7 +44,7 @@ local function ClickCenterScreen()
 end
 
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v33_AutoWalk"
+SG.Name = "DarkDev_v33_Update"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -151,6 +153,119 @@ local function AddActionButton(col, txt, callback)
     b.MouseButton1Click:Connect(callback)
 end
 
+-- --- KILLAURA WITH PISTOL EQUIP, TP & NOTIFICATION ---
+local currentKillAuraIndex = 1
+
+local function GetPistolTool()
+    local char = LP.Character
+    local bp = LP:FindFirstChild("Backpack")
+    
+    if char then
+        for _, tool in ipairs(char:GetChildren()) do
+            if tool:IsA("Tool") and string.find(string.lower(tool.Name), "pistol") then
+                return tool
+            end
+        end
+    end
+    if bp then
+        for _, tool in ipairs(bp:GetChildren()) do
+            if tool:IsA("Tool") and string.find(string.lower(tool.Name), "pistol") then
+                return tool
+            end
+        end
+    end
+    return nil
+end
+
+local function SendDarkDevNotification(msg)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "DARKDEV RP",
+            Text = msg,
+            Duration = 4
+        })
+    end)
+    print("[DARKDEV]: " .. msg)
+end
+
+-- KillAura Loop
+task.spawn(function()
+    while true do
+        task.wait(0.08)
+        if getgenv().Config.KillAura then
+            local pistol = GetPistolTool()
+            if not pistol then
+                SendDarkDevNotification("Item not found, buy it on the gunshop")
+                getgenv().Config.KillAura = false
+                task.wait(2)
+            else
+                if pistol.Parent ~= LP.Character then
+                    LP.Character.Humanoid:EquipTool(pistol)
+                end
+                
+                local targetList = {}
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= LP and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 and p.Character:FindFirstChild("HumanoidRootPart") then
+                        table.insert(targetList, p)
+                    end
+                end
+                
+                if #targetList > 0 then
+                    if currentKillAuraIndex > #targetList then currentKillAuraIndex = 1 end
+                    local targetPlayer = targetList[currentKillAuraIndex]
+                    
+                    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and targetPlayer.Character:FindFirstChild("Head") then
+                        local tHrp = targetPlayer.Character.HumanoidRootPart
+                        local tHead = targetPlayer.Character.Head
+                        local tHum = targetPlayer.Character.Humanoid
+                        
+                        if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+                            LP.Character.HumanoidRootPart.CFrame = tHrp.CFrame * CFrame.new(0, 0, 2.5)
+                        end
+                        
+                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, tHead.Position)
+                        ClickCenterScreen()
+                        
+                        if tHum.Health <= 0 then
+                            currentKillAuraIndex = currentKillAuraIndex + 1
+                            task.wait(0.15)
+                        end
+                    else
+                        currentKillAuraIndex = currentKillAuraIndex + 1
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- --- TP PLAYER FUNCTION ---
+local function TeleportToNextPlayer()
+    local alivePlayers = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(alivePlayers, p)
+        end
+    end
+    if #alivePlayers > 0 then
+        local targetP = alivePlayers[math.random(1, #alivePlayers)]
+        if targetP and targetP.Character and targetP.Character:FindFirstChild("HumanoidRootPart") then
+            LP.Character.HumanoidRootPart.CFrame = targetP.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+            SendDarkDevNotification("Teleported to " .. targetP.Name)
+        end
+    end
+end
+
+-- --- TEAM FINDER (LEADERBOARD CHECK) ---
+local function CheckLeaderboardTeams()
+    local info = "--- TEAMS / LEADERBOARD ---\n"
+    for _, p in ipairs(Players:GetPlayers()) do
+        local teamName = p.Team and p.Team.Name or "No Team"
+        info = info .. p.Name .. " [" .. teamName .. "]\n"
+    end
+    SendDarkDevNotification(info)
+end
+
 -- 1. COMBAT
 AddToggle(Col1, "Aimbot Head", "Aimbot")
 AddToggle(Col1, "Silent Aim", "SilentAim")
@@ -165,6 +280,7 @@ AddToggle(Col2, "Tracers", "Tracers")
 
 -- 3. MOVEMENT
 AddToggle(Col3, "Fly Mode", "Fly")
+AddToggle(Col3, "Legit Fly", "LegitFly")
 AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
@@ -176,6 +292,8 @@ AddToggle(Col4, "Click TP", "ClickTP")
 AddToggle(Col4, "Car Boost", "VehicleBoost")
 AddToggle(Col4, "Inf Stamina", "InfStamina")
 AddToggle(Col4, "Fullbright", "Fullbright")
+AddActionButton(Col4, "TP Player", TeleportToNextPlayer)
+AddActionButton(Col4, "Team Finder", CheckLeaderboardTeams)
 AddActionButton(Col4, "Server Hop", function()
     TeleportService:Teleport(game.PlaceId, LP)
 end)
@@ -205,24 +323,28 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- BULLETPROOF AUTO-WALK & RED MARKER SCANNER ---
+-- --- BULLETPROOF MOBILE AUTO-WALK & RED MARKER SCANNER (100m) ---
 local MAX_MARKER_RANGE = 300 -- ~100 μέτρα
 
 local SearchWaypoints = {}
 local currentSearchIdx = 1
 
--- Function to physically move player to a target position reliably on mobile
 local function WalkToPosition(targetPos)
     local Char = LP.Character
     if not Char or not Char:FindFirstChild("HumanoidRootPart") or not Char:FindFirstChild("Humanoid") then return end
     local hrp = Char.HumanoidRootPart
     local hum = Char.Humanoid
     
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game)
+    end)
+    hum.WalkSpeed = 32
+    
     local targetFlat = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
     local dist = (targetFlat - hrp.Position).Magnitude
     if dist > 1.8 then
         local dir = (targetFlat - hrp.Position).Unit
-        hum:Move(dir, false) -- Forced continuous directional movement (Fixes Mobile Auto-Walk)
+        hum:Move(dir, false)
         hum:MoveTo(targetPos)
         return false
     else
@@ -231,7 +353,6 @@ local function WalkToPosition(targetPos)
     end
 end
 
--- Scan ALL possible red markers, prompts, broom icons, touch interests in 100m
 local function FindNearestMarker()
     local Char = LP.Character
     if not Char or not Char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -245,19 +366,15 @@ local function FindNearestMarker()
             local pos = nil
             local isMarker = false
             
-            -- ProximityPrompt
             if obj:IsA("ProximityPrompt") and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
                 isMarker = true
                 pos = obj.Parent.Position
-            -- TouchInterest / ClickDetector
             elseif (obj:IsA("TouchTransmitter") or obj:IsA("ClickDetector")) and obj.Parent and obj.Parent:IsA("BasePart") then
                 isMarker = true
                 pos = obj.Parent.Position
-            -- BillboardGui / SurfaceGui
             elseif (obj:IsA("BillboardGui") or obj:IsA("SurfaceGui")) and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
                 isMarker = true
                 pos = obj.Parent.Position
-            -- BasePart / MeshPart with Red Color or Job Name
             elseif obj:IsA("BasePart") and obj.Transparency < 0.9 then
                 local c = obj.Color
                 local isRed = (c.R > 0.6 and c.G < 0.4 and c.B < 0.4) or (c.R > 0.7 and c.G < 0.5)
@@ -306,11 +423,9 @@ task.spawn(function()
         if getgenv().Config.SkoupesBot then
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
-                -- 1. Look for Red Marker in 100m
                 local markerPos = FindNearestMarker()
                 
                 if markerPos then
-                    -- Walk directly to marker using Humanoid:Move for guaranteed mobile walking
                     local reached = WalkToPosition(markerPos)
                     ClickCenterScreen()
                     
@@ -324,7 +439,6 @@ task.spawn(function()
                         end)
                     end
                 else
-                    -- 2. Patrol 10x10 area to locate new spawns
                     if #SearchWaypoints == 0 then GenerateSearchPatrol() end
                     
                     if #SearchWaypoints > 0 then
@@ -345,7 +459,7 @@ task.spawn(function()
     end
 end)
 
--- --- INPUT HANDLERS (CLICK TP & DESTROYER) ---
+-- --- INPUT HANDLERS ---
 local function HandleActionAtPosition(targetPos)
     if not targetPos then return end
     
@@ -411,8 +525,18 @@ RunService.RenderStepped:Connect(function()
     local Char = LP.Character; if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
     local HRP = Char.HumanoidRootPart
 
-    FlyOverlay.Visible = getgenv().Config.Fly and not Main.Visible
-    if getgenv().Config.Fly then
+    FlyOverlay.Visible = (getgenv().Config.Fly or getgenv().Config.LegitFly) and not Main.Visible
+    
+    if getgenv().Config.LegitFly then
+        local jitterX = (math.random(-10, 10) / 100)
+        local jitterZ = (math.random(-10, 10) / 100)
+        local baseSpeed = getgenv().Config.FlySpeed * 0.8
+        local V = 0
+        if getgenv().Config.FlyUp then V = 35 elseif getgenv().Config.FlyDown then V = -35 end
+        local moveDir = Char.Humanoid.MoveDirection
+        local humanizedVelocity = (moveDir * (baseSpeed + math.random(-2, 2))) + Vector3.new(jitterX, V + 0.8, jitterZ)
+        HRP.Velocity = HRP.Velocity:Lerp(humanizedVelocity, 0.25)
+    elseif getgenv().Config.Fly then
         local V = 0; if getgenv().Config.FlyUp then V = 50 elseif getgenv().Config.FlyDown then V = -50 end
         HRP.Velocity = (Char.Humanoid.MoveDirection * getgenv().Config.FlySpeed) + Vector3.new(0, V + 1.5, 0)
     end
@@ -461,4 +585,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev GreekRP AutoWalk Fixed Suite v33.0 Loaded.")
+print("DarkDev GreekRP Update Final v33.0 Loaded.")
