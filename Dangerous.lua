@@ -1,5 +1,5 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (Dynamic 10x5 Area)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (Red Marker Target Scanner 100m)
     Architect: Rool Machine
 ]]
 
@@ -30,70 +30,6 @@ getgenv().Config = {
     InjectTime = "Not Injected"
 }
 
--- --- DYNAMIC 10x5 BOUNDARY & WAYPOINT GENERATOR ---
-local DynamicBoundary = {}
-local DynamicWaypoints = {}
-local StartCenterPos = nil
-
-local function Generate10x5Area()
-    local Char = LP.Character
-    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
-    
-    local hrp = Char.HumanoidRootPart
-    local startCF = hrp.CFrame
-    StartCenterPos = startCF.Position
-    
-    DynamicBoundary = {}
-    DynamicWaypoints = {}
-    
-    -- 10x5 Rectangle relative to where player stood when pressing button
-    local halfW = 2.5
-    local len = 10
-    
-    local p1 = (startCF * Vector3.new(-halfW, 0, 0))
-    local p2 = (startCF * Vector3.new(halfW, 0, 0))
-    local p3 = (startCF * Vector3.new(halfW, 0, len))
-    local p4 = (startCF * Vector3.new(-halfW, 0, len))
-    
-    DynamicBoundary = {
-        Vector2.new(p1.X, p1.Z),
-        Vector2.new(p2.X, p2.Z),
-        Vector2.new(p3.X, p3.Z),
-        Vector2.new(p4.X, p4.Z)
-    }
-    
-    -- Pattern waypoints to cover 10x5 box
-    local forward = true
-    for x = -halfW, halfW, 1.25 do
-        if forward then
-            for z = 0, len, 2 do
-                table.insert(DynamicWaypoints, (startCF * Vector3.new(x, 0, z)).Position)
-            end
-        else
-            for z = len, 0, -2 do
-                table.insert(DynamicWaypoints, (startCF * Vector3.new(x, 0, z)).Position)
-            end
-        end
-        forward = not forward
-    end
-end
-
--- Check if Point (X, Z) is inside DynamicBoundary
-local function IsPointInsideBoundary(pt)
-    if #DynamicBoundary == 0 then return true end
-    local x, z = pt.X, pt.Z
-    local inside = false
-    local j = #DynamicBoundary
-    for i = 1, #DynamicBoundary do
-        local xi, zi = DynamicBoundary[i].X, DynamicBoundary[i].Y
-        local xj, zj = DynamicBoundary[j].X, DynamicBoundary[j].Y
-        local intersect = ((zi > z) ~= (zj > z)) and (x < (xj - xi) * (z - zi) / (zj - zi + 0.00001) + xi)
-        if intersect then inside = not inside end
-        j = i
-    end
-    return inside
-end
-
 -- Click Center of Screen
 local function ClickCenterScreen()
     pcall(function()
@@ -105,21 +41,8 @@ local function ClickCenterScreen()
     pcall(function() mouse1click() end)
 end
 
--- Strictly keep player inside dynamic 10x5 boundary
-RunService.Heartbeat:Connect(function()
-    if getgenv().Config.SkoupesBot and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") and #DynamicBoundary > 0 then
-        local hrp = LP.Character.HumanoidRootPart
-        local pos = hrp.Position
-        if not IsPointInsideBoundary(pos) and StartCenterPos then
-            local dir = (StartCenterPos - pos).Unit
-            hrp.CFrame = CFrame.new(pos + dir * 1.5)
-            hrp.Velocity = Vector3.new(0, 0, 0)
-        end
-    end
-end)
-
 local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v33_Dynamic"
+SG.Name = "DarkDev_v33_RedMarker"
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
@@ -246,12 +169,8 @@ AddToggle(Col3, "Noclip", "Noclip")
 AddToggle(Col3, "Inf Jump", "InfJump")
 AddToggle(Col3, "Speed Boost", "SpeedActive")
 
--- 4. RP UTILS (With Dynamic 10x5 Auto-Farm)
-AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot", function(active)
-    if active then
-        Generate10x5Area()
-    end
-end)
+-- 4. RP UTILS (Red Marker Auto-Farm 100m)
+AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
 AddToggle(Col4, "Destroyer", "DestroyerMode")
 AddToggle(Col4, "Click TP", "ClickTP")
 AddToggle(Col4, "Car Boost", "VehicleBoost")
@@ -286,34 +205,103 @@ Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); 
 Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- AUTOMATED SKOUPES BOT TASK THREAD (DYNAMIC 10x5 AREA) ---
+-- --- AUTOMATED SKOUPES BOT TASK THREAD (RED MARKER SCANNER - 100m RANGE) ---
+local MAX_MARKER_RANGE = 300 -- ~100 μέτρα εμβέλεια
+
+local function GetClosestRedMarker()
+    local Char = LP.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return nil end
+    local hrpPos = Char.HumanoidRootPart.Position
+    
+    local closestPos = nil
+    local closestDist = MAX_MARKER_RANGE
+    
+    -- 1. Scan ProximityPrompts
+    for _, prompt in ipairs(workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
+            local pos = prompt.Parent.Position
+            local dist = (hrpPos - pos).Magnitude
+            if dist <= MAX_MARKER_RANGE and dist < closestDist then
+                closestDist = dist
+                closestPos = pos
+            end
+        end
+    end
+    
+    -- 2. Scan BillboardGui / ImageLabel / Red Arrow Markers
+    if not closestPos then
+        for _, bg in ipairs(workspace:GetDescendants()) do
+            if bg:IsA("BillboardGui") and bg.Enabled and bg.Parent and bg.Parent:IsA("BasePart") then
+                local pos = bg.Parent.Position
+                local dist = (hrpPos - pos).Magnitude
+                if dist <= MAX_MARKER_RANGE and dist < closestDist then
+                    closestDist = dist
+                    closestPos = pos
+                end
+            end
+        end
+    end
+
+    -- 3. Scan Parts / Models named Dirt, Dust, Trash, Skoupa, Marker, Spot, Job
+    if not closestPos then
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Transparency < 1 then
+                local name = string.lower(v.Name)
+                if string.find(name, "dust") or string.find(name, "dirt") or string.find(name, "trash") or 
+                   string.find(name, "skoupa") or string.find(name, "clean") or string.find(name, "marker") or
+                   string.find(name, "spot") or string.find(name, "job") then
+                    local pos = v.Position
+                    local dist = (hrpPos - pos).Magnitude
+                    if dist <= MAX_MARKER_RANGE and dist < closestDist then
+                        closestDist = dist
+                        closestPos = pos
+                    end
+                end
+            end
+        end
+    end
+    
+    return closestPos
+end
+
 task.spawn(function()
     while true do
-        task.wait(0.12)
+        task.wait(0.1)
         
         if getgenv().Config.SkoupesBot then
-            ClickCenterScreen()
-
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
                 local Hum = Char.Humanoid
-                if #DynamicWaypoints == 0 then
-                    Generate10x5Area()
-                end
+                local targetMarkerPos = GetClosestRedMarker()
                 
-                for _, waypoint in ipairs(DynamicWaypoints) do
-                    if not getgenv().Config.SkoupesBot then break end
+                if targetMarkerPos then
+                    -- Πηγαίνει αυτόματα στο κόκκινο σημάδι
+                    Hum:MoveTo(targetMarkerPos)
                     
-                    Hum:MoveTo(waypoint)
                     local startTime = tick()
                     repeat
-                        task.wait(0.1)
+                        task.wait(0.08)
                         ClickCenterScreen()
-                        if (tick() - startTime) > 2.0 and (Char.HumanoidRootPart.Position - waypoint).Magnitude > 3 then
+                        
+                        -- Fire nearest ProximityPrompt automatically if close
+                        pcall(function()
+                            for _, prompt in ipairs(workspace:GetDescendants()) do
+                                if prompt:IsA("ProximityPrompt") and (prompt.Parent.Position - Char.HumanoidRootPart.Position).Magnitude < 10 then
+                                    fireproximityprompt(prompt)
+                                end
+                            end
+                        end)
+                        
+                        -- Unstick logic
+                        if (tick() - startTime) > 2.0 and (Char.HumanoidRootPart.Position - targetMarkerPos).Magnitude > 4 then
                             Hum.Jump = true
-                            Hum:MoveTo(waypoint)
+                            Hum:MoveTo(targetMarkerPos)
                         end
-                    until (Char.HumanoidRootPart.Position - waypoint).Magnitude < 2.5 or (tick() - startTime) > 3.5 or not getgenv().Config.SkoupesBot
+                    until (Char.HumanoidRootPart.Position - targetMarkerPos).Magnitude < 3.0 or (tick() - startTime) > 5.0 or not getgenv().Config.SkoupesBot
+                else
+                    -- Αν δεν βρει σημάδι σε 100m, κάνει click και περιμένει να εμφανιστεί νέο
+                    ClickCenterScreen()
+                    task.wait(0.3)
                 end
             end
         end
@@ -436,4 +424,4 @@ UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Dynamic Suite v33.0 Loaded.")
+print("DarkDev RedMarker Suite v33.0 Loaded.")
