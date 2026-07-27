@@ -1,7 +1,6 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v34.0 (PAGED EDITION 1/2 & 2/2)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v34.1 (BUGFIXES & PERFECT HOVER FLY)
     Architect: Rool Machine
-    Features: Multi-Page UI (1/2, 2/2), Fake Access Bypass Fullscreen Loader, FPS Booster, AC Bypass & Upgraded Modules
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -112,9 +111,9 @@ PageHeader.Size = UDim2.new(0, 200, 0, 25); PageHeader.Position = UDim2.new(0, 1
 local Close = Instance.new("TextButton", Main)
 Close.Size = UDim2.new(0, 22, 0, 22); Close.Position = UDim2.new(1, -26, 0, 4); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1; Close.Font = Enum.Font.GothamBold
 
--- Button UNDER Close Button for Page Switcher (1/2 <-> 2/2)
+-- Clean Uncovered Page Switcher (1/2 <-> 2/2)
 local PageSwitchBtn = Instance.new("TextButton", Main)
-PageSwitchBtn.Size = UDim2.new(0, 32, 0, 20); PageSwitchBtn.Position = UDim2.new(1, -30, 0, 28); PageSwitchBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 50); PageSwitchBtn.Text = "1/2"; PageSwitchBtn.TextColor3 = Color3.fromRGB(0, 255, 255); PageSwitchBtn.Font = Enum.Font.GothamBold; PageSwitchBtn.TextSize = 10
+PageSwitchBtn.Size = UDim2.new(0, 35, 0, 20); PageSwitchBtn.Position = UDim2.new(0, 210, 0, 3); PageSwitchBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 50); PageSwitchBtn.Text = "1/2"; PageSwitchBtn.TextColor3 = Color3.fromRGB(0, 255, 255); PageSwitchBtn.Font = Enum.Font.GothamBold; PageSwitchBtn.TextSize = 10
 Instance.new("UICorner", PageSwitchBtn); Instance.new("UIStroke", PageSwitchBtn).Color = Color3.fromRGB(124, 77, 255)
 
 local OpenIcon = Instance.new("ImageButton", SG)
@@ -254,27 +253,33 @@ end)
 AddToggle(Col6, "Anti-AFK", "AntiAFK")
 AddToggle(Col6, "Godmode Protect", "Godmode")
 
--- --- 4. FULLSCREEN BLACK BYPASS LOADING OVERLAY ---
+-- --- 4. CENTERED PROJECT LOADING MODAL ---
 local function TriggerFullBypassScreen()
-    local LoaderOverlay = Instance.new("Frame", SG)
-    LoaderOverlay.Size = UDim2.new(1, 0, 1, 0)
-    LoaderOverlay.Position = UDim2.new(0, 0, 0, 0)
-    LoaderOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    LoaderOverlay.ZIndex = 1000
+    local ModalFrame = Instance.new("Frame", SG)
+    ModalFrame.Size = UDim2.new(0, 320, 0, 180)
+    ModalFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+    ModalFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+    ModalFrame.Active = true
+    ModalFrame.Draggable = true
+    ModalFrame.ZIndex = 1000
+    Instance.new("UICorner", ModalFrame)
+    local MStroke = Instance.new("UIStroke", ModalFrame)
+    MStroke.Color = Color3.fromRGB(124, 77, 255)
+    MStroke.Thickness = 2
     
-    local TitleLabel = Instance.new("TextLabel", LoaderOverlay)
-    TitleLabel.Size = UDim2.new(1, 0, 0, 40); TitleLabel.Position = UDim2.new(0, 0, 0.3, 0)
-    TitleLabel.Text = "DARKDEV SYSTEM ACCESS BYPASS"; TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
-    TitleLabel.Font = Enum.Font.GothamBold; TitleLabel.TextSize = 18; TitleLabel.BackgroundTransparency = 1
+    local TitleLabel = Instance.new("TextLabel", ModalFrame)
+    TitleLabel.Size = UDim2.new(1, 0, 0, 35); TitleLabel.Position = UDim2.new(0, 0, 0, 5)
+    TitleLabel.Text = "⚡ PROJECT LOADING ⚡"; TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+    TitleLabel.Font = Enum.Font.GothamBold; TitleLabel.TextSize = 14; TitleLabel.BackgroundTransparency = 1
     
-    local StatusText = Instance.new("TextLabel", LoaderOverlay)
-    StatusText.Size = UDim2.new(1, 0, 0, 30); StatusText.Position = UDim2.new(0, 0, 0.42, 0)
-    StatusText.Text = "Initialising Bypass Protocol..."; StatusText.TextColor3 = Color3.fromRGB(150, 150, 255)
-    StatusText.Font = Enum.Font.Code; StatusText.TextSize = 12; StatusText.BackgroundTransparency = 1
+    local StatusText = Instance.new("TextLabel", ModalFrame)
+    StatusText.Size = UDim2.new(1, -20, 0, 30); StatusText.Position = UDim2.new(0, 10, 0, 42)
+    StatusText.Text = "Initialising Bypass Protocol..."; StatusText.TextColor3 = Color3.fromRGB(180, 180, 255)
+    StatusText.Font = Enum.Font.Code; StatusText.TextSize = 11; StatusText.BackgroundTransparency = 1
     
-    local BarBg = Instance.new("Frame", LoaderOverlay)
-    BarBg.Size = UDim2.new(0.6, 0, 0, 20); BarBg.Position = UDim2.new(0.2, 0, 0.52, 0)
-    BarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    local BarBg = Instance.new("Frame", ModalFrame)
+    BarBg.Size = UDim2.new(0.85, 0, 0, 18); BarBg.Position = UDim2.new(0.075, 0, 0.52, 0)
+    BarBg.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     Instance.new("UICorner", BarBg)
     local BarStroke = Instance.new("UIStroke", BarBg); BarStroke.Color = Color3.fromRGB(124, 77, 255)
     
@@ -282,22 +287,22 @@ local function TriggerFullBypassScreen()
     BarFill.Size = UDim2.new(0, 0, 1, 0); BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
     Instance.new("UICorner", BarFill)
     
-    local PercentLabel = Instance.new("TextLabel", LoaderOverlay)
-    PercentLabel.Size = UDim2.new(1, 0, 0, 25); PercentLabel.Position = UDim2.new(0, 0, 0.58, 0)
+    local PercentLabel = Instance.new("TextLabel", ModalFrame)
+    PercentLabel.Size = UDim2.new(1, 0, 0, 25); PercentLabel.Position = UDim2.new(0, 0, 0.72, 0)
     PercentLabel.Text = "0%"; PercentLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     PercentLabel.Font = Enum.Font.GothamBold; PercentLabel.TextSize = 13; PercentLabel.BackgroundTransparency = 1
 
     task.spawn(function()
         local stages = {
-            "Injecting Memory Bypass Engine...",
-            "Bypassing Greek RP Anti-Cheat System...",
-            "Patching Client Network Offsets...",
-            "Acquiring Server-Side Privileges...",
-            "Optimising Memory Heap & FPS...",
-            "Bypass Complete! Access Granted."
+            "Injecting Memory Bypass...",
+            "Bypassing Anti-Cheat...",
+            "Patching Network Offsets...",
+            "Acquiring Admin Privileges...",
+            "Optimising FPS & Memory...",
+            "Project Loaded Successfully!"
         }
         for i = 1, 100 do
-            task.wait(0.04)
+            task.wait(0.03)
             BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
             PercentLabel.Text = i .. "%"
             
@@ -308,9 +313,9 @@ local function TriggerFullBypassScreen()
             elseif i == 90 then StatusText.Text = stages[5]
             elseif i == 100 then StatusText.Text = stages[6] end
         end
-        task.wait(0.8)
-        LoaderOverlay:Destroy()
-        SendDarkDevNotification("Full Bypass Successfully Executed!")
+        task.wait(0.6)
+        ModalFrame:Destroy()
+        SendDarkDevNotification("Project Loaded Successfully!")
     end)
 end
 
@@ -566,24 +571,34 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- --- BULLETPROOF PERFECT HOVER FLY ---
 RunService.RenderStepped:Connect(function()
     local Char = LP.Character; if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
     local HRP = Char.HumanoidRootPart
+    local Hum = Char:FindFirstChildOfClass("Humanoid")
 
     FlyOverlay.Visible = (getgenv().Config.Fly or getgenv().Config.LegitFly) and not Main.Visible
     
-    if getgenv().Config.LegitFly then
-        local jitterX = (math.random(-10, 10) / 100)
-        local jitterZ = (math.random(-10, 10) / 100)
-        local baseSpeed = getgenv().Config.FlySpeed * 0.8
-        local V = 0
-        if getgenv().Config.FlyUp then V = 35 elseif getgenv().Config.FlyDown then V = -35 end
-        local moveDir = Char.Humanoid.MoveDirection
-        local humanizedVelocity = (moveDir * (baseSpeed + math.random(-2, 2))) + Vector3.new(jitterX, V + 0.8, jitterZ)
-        HRP.Velocity = HRP.Velocity:Lerp(humanizedVelocity, 0.25)
-    elseif getgenv().Config.Fly then
-        local V = 0; if getgenv().Config.FlyUp then V = 50 elseif getgenv().Config.FlyDown then V = -50 end
-        HRP.Velocity = (Char.Humanoid.MoveDirection * getgenv().Config.FlySpeed) + Vector3.new(0, V + 1.5, 0)
+    if getgenv().Config.Fly or getgenv().Config.LegitFly then
+        local verticalVelocity = 0
+        if getgenv().Config.FlyUp then
+            verticalVelocity = getgenv().Config.FlySpeed
+        elseif getgenv().Config.FlyDown then
+            verticalVelocity = -getgenv().Config.FlySpeed
+        else
+            verticalVelocity = 0 -- Strictly 0 to freeze altitude and stop dropping height!
+        end
+
+        local moveDir = Hum and Hum.MoveDirection or Vector3.new(0,0,0)
+        local horizontalVelocity = moveDir * getgenv().Config.FlySpeed
+        
+        if getgenv().Config.LegitFly then
+            local jitterX = (math.random(-5, 5) / 100)
+            local jitterZ = (math.random(-5, 5) / 100)
+            HRP.Velocity = Vector3.new(horizontalVelocity.X + jitterX, verticalVelocity, horizontalVelocity.Z + jitterZ)
+        else
+            HRP.Velocity = Vector3.new(horizontalVelocity.X, verticalVelocity, horizontalVelocity.Z)
+        end
     end
     
     local TargetHead = nil
@@ -670,4 +685,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("DarkDev Paged Master Suite v34.0 Loaded Successfully.")
+print("DarkDev Paged Master Suite v34.1 Fixed Loaded.")
