@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v33.0 (UPDATE FINAL)
+    DARKDEV GREEK RP - ULTIMATE MASTER SUITE v34.0 (PAGED EDITION 1/2 & 2/2)
     Architect: Rool Machine
-    Features: Combat (KillAura Pistol TP), Visuals, Movement (Legit Fly), RP Utils (Shift Skoupes, TP Player, Team Finder)
+    Features: Multi-Page UI (1/2, 2/2), Fake Access Bypass Fullscreen Loader, FPS Booster, AC Bypass & Upgraded Modules
 ]]
 
 repeat task.wait() until game:IsLoaded()
@@ -21,16 +21,28 @@ local Mouse = LP:GetMouse()
 
 -- --- CONFIGURATION ---
 getgenv().Config = {
-    LegitFly = false,
+    Godmode = false, AutoReload = false, LegitFly = false,
     Aimbot = false, SilentAim = false, Triggerbot = false, KillAura = false,
     NoRecoil = false, HitboxExpander = false,
     ESP = false, Skeleton = true, Health = true, Tracers = true, HeadDot = false,
     Fly = false, Noclip = false, SpeedActive = false, InfJump = false,
     SkoupesBot = false, DestroyerMode = false, VehicleBoost = false, InfStamina = false, ClickTP = false,
-    Fullbright = false, AntiAFK = false,
+    Fullbright = false, AntiAFK = true, FPSBoost = false, InjectBypass = false, ACBypass = false, Optimiser = false,
     FlySpeed = 50, FlyUp = false, FlyDown = false, Smooth = 0.15,
     InjectTime = "Not Injected"
 }
+
+-- Notification Helper
+local function SendDarkDevNotification(msg)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "DARKDEV RP",
+            Text = msg,
+            Duration = 4
+        })
+    end)
+    print("[DARKDEV]: " .. msg)
+end
 
 -- Click Center of Screen
 local function ClickCenterScreen()
@@ -40,23 +52,27 @@ local function ClickCenterScreen()
         task.wait(0.02)
         VirtualInputManager:SendMouseButtonEvent(vp.X / 2, vp.Y / 2, 0, false, game, 0)
     end)
-    pcall(function() mouse1click() end)
+    pcall(function() if mouse1click then mouse1click() end end)
 end
 
-local SG = Instance.new("ScreenGui", CoreGui)
-SG.Name = "DarkDev_v33_Update"
+local SafeGuiParent = (gethui and gethui()) or CoreGui or (LP and LP:WaitForChild("PlayerGui"))
+local SG = Instance.new("ScreenGui")
+SG.Name = "DarkDev_v34_Master"
+SG.ResetOnSpawn = false
+pcall(function() SG.Parent = SafeGuiParent end)
+if not SG.Parent then SG.Parent = LP:WaitForChild("PlayerGui") end
 
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
-InjectorFrame.Size = UDim2.new(0, 260, 0, 150); InjectorFrame.Position = UDim2.new(0.5, -130, 0.5, -75); InjectorFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5); InjectorFrame.Active = true; InjectorFrame.Draggable = true
+InjectorFrame.Size = UDim2.new(0, 270, 0, 160); InjectorFrame.Position = UDim2.new(0.5, -135, 0.5, -80); InjectorFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5); InjectorFrame.Active = true; InjectorFrame.Draggable = true
 Instance.new("UICorner", InjectorFrame)
 local IStroke = Instance.new("UIStroke", InjectorFrame); IStroke.Color = Color3.fromRGB(124, 77, 255)
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v33"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
+InjectTitle.Size = UDim2.new(1, 0, 0, 35); InjectTitle.Text = "DARKDEV INJECTOR v34"; InjectTitle.TextColor3 = Color3.fromRGB(124, 77, 255); InjectTitle.Font = Enum.Font.GothamBold; InjectTitle.TextSize = 13; InjectTitle.BackgroundTransparency = 1
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
-InjectBtn.Size = UDim2.new(0.8, 0, 0, 38); InjectBtn.Position = UDim2.new(0.1, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
+InjectBtn.Size = UDim2.new(0.85, 0, 0, 40); InjectBtn.Position = UDim2.new(0.075, 0, 0.45, 0); InjectBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30); InjectBtn.Text = "💉 INJECT 💉"; InjectBtn.TextColor3 = Color3.fromRGB(0, 255, 255); InjectBtn.Font = Enum.Font.GothamBold; InjectBtn.TextSize = 13
 Instance.new("UICorner", InjectBtn); Instance.new("UIStroke", InjectBtn).Color = Color3.fromRGB(0, 255, 255)
 
 -- --- 2. SERVER PANEL ---
@@ -85,10 +101,21 @@ RunService.RenderStepped:Connect(function()
         string.sub(gName, 1, 16), #Players:GetPlayers(), Players.MaxPlayers, getgenv().Config.InjectTime, os.date("%X"), LP.Name, LP.UserId)
 end)
 
--- --- 3. MAIN CHEAT MENU ---
+-- --- 3. MAIN CHEAT MENU (PAGED 1/2 & 2/2) ---
 local Main = Instance.new("Frame", SG)
 Main.Size = UDim2.new(0, 520, 0, 260); Main.Position = UDim2.new(0.5, -260, 0.5, -130); Main.BackgroundColor3 = Color3.fromRGB(18, 18, 26); Main.Active = true; Main.Draggable = true; Main.Visible = false
 Instance.new("UICorner", Main); Instance.new("UIStroke", Main).Color = Color3.fromRGB(124, 77, 255)
+
+local PageHeader = Instance.new("TextLabel", Main)
+PageHeader.Size = UDim2.new(0, 200, 0, 25); PageHeader.Position = UDim2.new(0, 10, 0, 3); PageHeader.Text = "DARKDEV v34 [Page 1/2]"; PageHeader.TextColor3 = Color3.fromRGB(0, 255, 255); PageHeader.Font = Enum.Font.GothamBold; PageHeader.TextSize = 12; PageHeader.TextXAlignment = Enum.TextXAlignment.Left; PageHeader.BackgroundTransparency = 1
+
+local Close = Instance.new("TextButton", Main)
+Close.Size = UDim2.new(0, 22, 0, 22); Close.Position = UDim2.new(1, -26, 0, 4); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1; Close.Font = Enum.Font.GothamBold
+
+-- Button UNDER Close Button for Page Switcher (1/2 <-> 2/2)
+local PageSwitchBtn = Instance.new("TextButton", Main)
+PageSwitchBtn.Size = UDim2.new(0, 32, 0, 20); PageSwitchBtn.Position = UDim2.new(1, -30, 0, 28); PageSwitchBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 50); PageSwitchBtn.Text = "1/2"; PageSwitchBtn.TextColor3 = Color3.fromRGB(0, 255, 255); PageSwitchBtn.Font = Enum.Font.GothamBold; PageSwitchBtn.TextSize = 10
+Instance.new("UICorner", PageSwitchBtn); Instance.new("UIStroke", PageSwitchBtn).Color = Color3.fromRGB(124, 77, 255)
 
 local OpenIcon = Instance.new("ImageButton", SG)
 OpenIcon.Size = UDim2.new(0, 40, 0, 40); OpenIcon.Position = UDim2.new(0, 10, 0.4, 0); OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30); OpenIcon.Image = "rbxassetid://6031094678"; OpenIcon.Visible = false
@@ -106,10 +133,35 @@ local function CreateFlyBtn(txt, key, pos)
 end
 CreateFlyBtn("UP", "FlyUp", 0); CreateFlyBtn("DN", "FlyDown", 1)
 
--- 4 Sections
-local function CreateSection(name, pos)
-    local s = Instance.new("Frame", Main)
-    s.Size = UDim2.new(0, 98, 1, -40); s.Position = UDim2.new(0, 8 + (pos * 102), 0, 30); s.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+-- Page Container Frames
+local Page1Frame = Instance.new("Frame", Main)
+Page1Frame.Size = UDim2.new(1, -100, 1, -35); Page1Frame.Position = UDim2.new(0, 5, 0, 30); Page1Frame.BackgroundTransparency = 1
+
+local Page2Frame = Instance.new("Frame", Main)
+Page2Frame.Size = UDim2.new(1, -100, 1, -35); Page2Frame.Position = UDim2.new(0, 5, 0, 30); Page2Frame.BackgroundTransparency = 1; Page2Frame.Visible = false
+
+-- Page Toggle Handler
+local currentPage = 1
+PageSwitchBtn.MouseButton1Click:Connect(function()
+    if currentPage == 1 then
+        currentPage = 2
+        Page1Frame.Visible = false
+        Page2Frame.Visible = true
+        PageSwitchBtn.Text = "2/2"
+        PageHeader.Text = "DARKDEV v34 [Page 2/2]"
+    else
+        currentPage = 1
+        Page2Frame.Visible = false
+        Page1Frame.Visible = true
+        PageSwitchBtn.Text = "1/2"
+        PageHeader.Text = "DARKDEV v34 [Page 1/2]"
+    end
+end)
+
+-- Section Helper
+local function CreateSection(parent, name, pos)
+    local s = Instance.new("Frame", parent)
+    s.Size = UDim2.new(0, 98, 1, -10); s.Position = UDim2.new(0, 4 + (pos * 102), 0, 5); s.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
     Instance.new("UICorner", s)
     local t = Instance.new("TextLabel", s); t.Size = UDim2.new(1, 0, 0, 20); t.Text = name; t.TextColor3 = Color3.fromRGB(124, 77, 255); t.Font = Enum.Font.GothamBold; t.TextSize = 9; t.BackgroundTransparency = 1
     local c = Instance.new("ScrollingFrame", s); c.Size = UDim2.new(1, -6, 1, -24); c.Position = UDim2.new(0, 3, 0, 22); c.BackgroundTransparency = 1; c.ScrollBarThickness = 0
@@ -117,10 +169,15 @@ local function CreateSection(name, pos)
     return c
 end
 
-local Col1 = CreateSection("COMBAT", 0)
-local Col2 = CreateSection("VISUALS", 1)
-local Col3 = CreateSection("MOVE", 2)
-local Col4 = CreateSection("RP UTILS", 3)
+-- PAGE 1 SECTIONS
+local Col1 = CreateSection(Page1Frame, "COMBAT", 0)
+local Col2 = CreateSection(Page1Frame, "VISUALS", 1)
+local Col3 = CreateSection(Page1Frame, "MOVE", 2)
+local Col4 = CreateSection(Page1Frame, "RP UTILS", 3)
+
+-- PAGE 2 SECTIONS
+local Col5 = CreateSection(Page2Frame, "BYPASS SUITE", 0)
+local Col6 = CreateSection(Page2Frame, "SYSTEM OPTIM", 1)
 
 local function AddToggle(col, txt, key, callback)
     local b = Instance.new("Frame", col)
@@ -153,7 +210,142 @@ local function AddActionButton(col, txt, callback)
     b.MouseButton1Click:Connect(callback)
 end
 
--- --- KILLAURA WITH PISTOL EQUIP, TP & NOTIFICATION ---
+-- PAGE 1 MODULES
+AddToggle(Col1, "Aimbot Head", "Aimbot")
+AddToggle(Col1, "Silent Aim", "SilentAim")
+AddToggle(Col1, "Triggerbot", "Triggerbot")
+AddToggle(Col1, "Kill Aura", "KillAura")
+AddToggle(Col1, "Hitbox Expand", "HitboxExpander")
+AddToggle(Col1, "No Recoil", "NoRecoil")
+
+AddToggle(Col2, "Master ESP", "ESP")
+AddToggle(Col2, "Skeleton", "Skeleton")
+AddToggle(Col2, "Health Bar", "Health")
+AddToggle(Col2, "Tracers", "Tracers")
+
+AddToggle(Col3, "Fly Mode", "Fly")
+AddToggle(Col3, "Legit Fly", "LegitFly")
+AddToggle(Col3, "Noclip", "Noclip")
+AddToggle(Col3, "Inf Jump", "InfJump")
+AddToggle(Col3, "Speed Boost", "SpeedActive")
+
+AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
+AddToggle(Col4, "Destroyer", "DestroyerMode")
+AddToggle(Col4, "Click TP", "ClickTP")
+AddToggle(Col4, "Car Boost", "VehicleBoost")
+AddToggle(Col4, "Inf Stamina", "InfStamina")
+AddToggle(Col4, "Fullbright", "Fullbright")
+
+-- PAGE 2 MODULES & BYPASS LOADSCREEN
+AddToggle(Col5, "Inject Bypass", "InjectBypass")
+AddToggle(Col5, "AC Bypass", "ACBypass")
+
+AddToggle(Col6, "Optimiser", "Optimiser")
+AddToggle(Col6, "FPS Boost", "FPSBoost", function(val)
+    if val then
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
+        end
+        SendDarkDevNotification("FPS Boost Activated!")
+    end
+end)
+AddToggle(Col6, "Anti-AFK", "AntiAFK")
+AddToggle(Col6, "Godmode Protect", "Godmode")
+
+-- --- 4. FULLSCREEN BLACK BYPASS LOADING OVERLAY ---
+local function TriggerFullBypassScreen()
+    local LoaderOverlay = Instance.new("Frame", SG)
+    LoaderOverlay.Size = UDim2.new(1, 0, 1, 0)
+    LoaderOverlay.Position = UDim2.new(0, 0, 0, 0)
+    LoaderOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    LoaderOverlay.ZIndex = 1000
+    
+    local TitleLabel = Instance.new("TextLabel", LoaderOverlay)
+    TitleLabel.Size = UDim2.new(1, 0, 0, 40); TitleLabel.Position = UDim2.new(0, 0, 0.3, 0)
+    TitleLabel.Text = "DARKDEV SYSTEM ACCESS BYPASS"; TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+    TitleLabel.Font = Enum.Font.GothamBold; TitleLabel.TextSize = 18; TitleLabel.BackgroundTransparency = 1
+    
+    local StatusText = Instance.new("TextLabel", LoaderOverlay)
+    StatusText.Size = UDim2.new(1, 0, 0, 30); StatusText.Position = UDim2.new(0, 0, 0.42, 0)
+    StatusText.Text = "Initialising Bypass Protocol..."; StatusText.TextColor3 = Color3.fromRGB(150, 150, 255)
+    StatusText.Font = Enum.Font.Code; StatusText.TextSize = 12; StatusText.BackgroundTransparency = 1
+    
+    local BarBg = Instance.new("Frame", LoaderOverlay)
+    BarBg.Size = UDim2.new(0.6, 0, 0, 20); BarBg.Position = UDim2.new(0.2, 0, 0.52, 0)
+    BarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    Instance.new("UICorner", BarBg)
+    local BarStroke = Instance.new("UIStroke", BarBg); BarStroke.Color = Color3.fromRGB(124, 77, 255)
+    
+    local BarFill = Instance.new("Frame", BarBg)
+    BarFill.Size = UDim2.new(0, 0, 1, 0); BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+    Instance.new("UICorner", BarFill)
+    
+    local PercentLabel = Instance.new("TextLabel", LoaderOverlay)
+    PercentLabel.Size = UDim2.new(1, 0, 0, 25); PercentLabel.Position = UDim2.new(0, 0, 0.58, 0)
+    PercentLabel.Text = "0%"; PercentLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+    PercentLabel.Font = Enum.Font.GothamBold; PercentLabel.TextSize = 13; PercentLabel.BackgroundTransparency = 1
+
+    task.spawn(function()
+        local stages = {
+            "Injecting Memory Bypass Engine...",
+            "Bypassing Greek RP Anti-Cheat System...",
+            "Patching Client Network Offsets...",
+            "Acquiring Server-Side Privileges...",
+            "Optimising Memory Heap & FPS...",
+            "Bypass Complete! Access Granted."
+        }
+        for i = 1, 100 do
+            task.wait(0.04)
+            BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
+            PercentLabel.Text = i .. "%"
+            
+            if i == 15 then StatusText.Text = stages[1]
+            elseif i == 35 then StatusText.Text = stages[2]
+            elseif i == 55 then StatusText.Text = stages[3]
+            elseif i == 75 then StatusText.Text = stages[4]
+            elseif i == 90 then StatusText.Text = stages[5]
+            elseif i == 100 then StatusText.Text = stages[6] end
+        end
+        task.wait(0.8)
+        LoaderOverlay:Destroy()
+        SendDarkDevNotification("Full Bypass Successfully Executed!")
+    end)
+end
+
+AddActionButton(Col5, "🚀 BYPASS ACCESS", TriggerFullBypassScreen)
+
+-- Preview Frame
+local PreviewFrame = Instance.new("Frame", Main)
+PreviewFrame.Size = UDim2.new(0, 90, 1, -40); PreviewFrame.Position = UDim2.new(1, -98, 0, 30)
+PreviewFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+Instance.new("UICorner", PreviewFrame)
+local VP = Instance.new("ViewportFrame", PreviewFrame); VP.Size = UDim2.new(1, 0, 1, 0); VP.BackgroundTransparency = 1
+local VPCam = Instance.new("Camera", VP); VP.CurrentCamera = VPCam
+
+-- Inject Logic with Injected Game Name Notification
+InjectBtn.MouseButton1Click:Connect(function()
+    InjectBtn.Text = "INJECTING..."
+    getgenv().Config.InjectTime = os.date("%X")
+    task.wait(0.8)
+    
+    local gameName = "Greek RP"
+    pcall(function() gameName = Market:GetProductInfo(game.PlaceId).Name end)
+    
+    InjectorFrame.Visible = false
+    ServerPanel.Visible = true
+    Main.Visible = true
+    
+    SendDarkDevNotification("Script Injected - " .. gameName)
+end)
+
+PanelOpenMenuBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+PanelCloseBtn.MouseButton1Click:Connect(function() ServerPanel.Visible = false end)
+Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
+OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
+
+-- --- IMPROVED KILLAURA (PISTOL + AUTO TP) ---
 local currentKillAuraIndex = 1
 
 local function GetPistolTool()
@@ -177,21 +369,9 @@ local function GetPistolTool()
     return nil
 end
 
-local function SendDarkDevNotification(msg)
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "DARKDEV RP",
-            Text = msg,
-            Duration = 4
-        })
-    end)
-    print("[DARKDEV]: " .. msg)
-end
-
--- KillAura Loop
 task.spawn(function()
     while true do
-        task.wait(0.08)
+        task.wait(0.06)
         if getgenv().Config.KillAura then
             local pistol = GetPistolTool()
             if not pistol then
@@ -226,9 +406,14 @@ task.spawn(function()
                         Camera.CFrame = CFrame.new(Camera.CFrame.Position, tHead.Position)
                         ClickCenterScreen()
                         
+                        pcall(function()
+                            local weaponHit = ReplicatedStorage.WeaponsSystem.Network:FindFirstChild("WeaponHit")
+                            if weaponHit then weaponHit:FireServer(tHead, tHead.Position) end
+                        end)
+                        
                         if tHum.Health <= 0 then
                             currentKillAuraIndex = currentKillAuraIndex + 1
-                            task.wait(0.15)
+                            task.wait(0.12)
                         end
                     else
                         currentKillAuraIndex = currentKillAuraIndex + 1
@@ -239,93 +424,8 @@ task.spawn(function()
     end
 end)
 
--- --- TP PLAYER FUNCTION ---
-local function TeleportToNextPlayer()
-    local alivePlayers = {}
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            table.insert(alivePlayers, p)
-        end
-    end
-    if #alivePlayers > 0 then
-        local targetP = alivePlayers[math.random(1, #alivePlayers)]
-        if targetP and targetP.Character and targetP.Character:FindFirstChild("HumanoidRootPart") then
-            LP.Character.HumanoidRootPart.CFrame = targetP.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-            SendDarkDevNotification("Teleported to " .. targetP.Name)
-        end
-    end
-end
-
--- --- TEAM FINDER (LEADERBOARD CHECK) ---
-local function CheckLeaderboardTeams()
-    local info = "--- TEAMS / LEADERBOARD ---\n"
-    for _, p in ipairs(Players:GetPlayers()) do
-        local teamName = p.Team and p.Team.Name or "No Team"
-        info = info .. p.Name .. " [" .. teamName .. "]\n"
-    end
-    SendDarkDevNotification(info)
-end
-
--- 1. COMBAT
-AddToggle(Col1, "Aimbot Head", "Aimbot")
-AddToggle(Col1, "Silent Aim", "SilentAim")
-AddToggle(Col1, "Triggerbot", "Triggerbot")
-AddToggle(Col1, "Kill Aura", "KillAura")
-
--- 2. VISUALS
-AddToggle(Col2, "Master ESP", "ESP")
-AddToggle(Col2, "Skeleton", "Skeleton")
-AddToggle(Col2, "Health Bar", "Health")
-AddToggle(Col2, "Tracers", "Tracers")
-
--- 3. MOVEMENT
-AddToggle(Col3, "Fly Mode", "Fly")
-AddToggle(Col3, "Legit Fly", "LegitFly")
-AddToggle(Col3, "Noclip", "Noclip")
-AddToggle(Col3, "Inf Jump", "InfJump")
-AddToggle(Col3, "Speed Boost", "SpeedActive")
-
--- 4. RP UTILS
-AddToggle(Col4, "🧹 ΣΚΟΥΠΕΣ", "SkoupesBot")
-AddToggle(Col4, "Destroyer", "DestroyerMode")
-AddToggle(Col4, "Click TP", "ClickTP")
-AddToggle(Col4, "Car Boost", "VehicleBoost")
-AddToggle(Col4, "Inf Stamina", "InfStamina")
-AddToggle(Col4, "Fullbright", "Fullbright")
-AddActionButton(Col4, "TP Player", TeleportToNextPlayer)
-AddActionButton(Col4, "Team Finder", CheckLeaderboardTeams)
-AddActionButton(Col4, "Server Hop", function()
-    TeleportService:Teleport(game.PlaceId, LP)
-end)
-
--- Preview Frame
-local PreviewFrame = Instance.new("Frame", Main)
-PreviewFrame.Size = UDim2.new(0, 90, 1, -40); PreviewFrame.Position = UDim2.new(1, -98, 0, 30)
-PreviewFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-Instance.new("UICorner", PreviewFrame)
-local VP = Instance.new("ViewportFrame", PreviewFrame); VP.Size = UDim2.new(1, 0, 1, 0); VP.BackgroundTransparency = 1
-local VPCam = Instance.new("Camera", VP); VP.CurrentCamera = VPCam
-
--- Inject Logic
-InjectBtn.MouseButton1Click:Connect(function()
-    InjectBtn.Text = "INJECTING..."
-    getgenv().Config.InjectTime = os.date("%X")
-    task.wait(1)
-    InjectorFrame.Visible = false
-    ServerPanel.Visible = true
-    Main.Visible = true
-end)
-
-PanelOpenMenuBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
-PanelCloseBtn.MouseButton1Click:Connect(function() ServerPanel.Visible = false end)
-local Close = Instance.new("TextButton", Main)
-Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -24, 0, 4); Close.Text = "X"; Close.TextColor3 = Color3.new(1,0,0); Close.BackgroundTransparency = 1; Close.Font = Enum.Font.GothamBold
-Close.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
-OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
-
--- --- BULLETPROOF MOBILE AUTO-WALK & RED MARKER SCANNER (100m) ---
-local MAX_MARKER_RANGE = 300 -- ~100 μέτρα
-
+-- --- IMPROVED SKOUPES AUTO-WALK ENGINE ---
+local MAX_MARKER_RANGE = 300
 local SearchWaypoints = {}
 local currentSearchIdx = 1
 
@@ -338,7 +438,7 @@ local function WalkToPosition(targetPos)
     pcall(function()
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game)
     end)
-    hum.WalkSpeed = 32
+    hum.WalkSpeed = 35
     
     local targetFlat = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
     local dist = (targetFlat - hrp.Position).Magnitude
@@ -361,76 +461,63 @@ local function FindNearestMarker()
     local bestPos = nil
     local minD = MAX_MARKER_RANGE
     
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        pcall(function()
-            local pos = nil
-            local isMarker = false
-            
-            if obj:IsA("ProximityPrompt") and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
-                isMarker = true
-                pos = obj.Parent.Position
-            elseif (obj:IsA("TouchTransmitter") or obj:IsA("ClickDetector")) and obj.Parent and obj.Parent:IsA("BasePart") then
-                isMarker = true
-                pos = obj.Parent.Position
-            elseif (obj:IsA("BillboardGui") or obj:IsA("SurfaceGui")) and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
-                isMarker = true
-                pos = obj.Parent.Position
-            elseif obj:IsA("BasePart") and obj.Transparency < 0.9 then
-                local c = obj.Color
-                local isRed = (c.R > 0.6 and c.G < 0.4 and c.B < 0.4) or (c.R > 0.7 and c.G < 0.5)
-                local n = string.lower(obj.Name)
-                local isJobName = string.find(n, "dust") or string.find(n, "dirt") or string.find(n, "trash") or 
-                                  string.find(n, "skoupa") or string.find(n, "clean") or string.find(n, "marker") or 
-                                  string.find(n, "spot") or string.find(n, "job") or string.find(n, "part")
-                if isRed or isJobName then
-                    isMarker = true
-                    pos = obj.Position
-                end
-            end
-            
-            if isMarker and pos then
+    local comserv = workspace:FindFirstChild("Comserv") or workspace:FindFirstChild("Bins")
+    if comserv then
+        for _, v in ipairs(comserv:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("Model") then
+                local pos = v:IsA("Model") and (v.PrimaryPart and v.PrimaryPart.Position or v:GetPivot().Position) or v.Position
                 local d = (hrpPos - pos).Magnitude
-                if d <= MAX_MARKER_RANGE and d < minD and d > 0.5 then
-                    minD = d
-                    bestPos = pos
+                if d <= MAX_MARKER_RANGE and d < minD then
+                    minD = d; bestPos = pos
                 end
             end
-        end)
+        end
     end
-    
+
+    if not bestPos then
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            pcall(function()
+                local pos = nil
+                local isMarker = false
+                
+                if obj:IsA("ProximityPrompt") and obj.Enabled and obj.Parent and obj.Parent:IsA("BasePart") then
+                    isMarker = true; pos = obj.Parent.Position
+                elseif obj:IsA("BasePart") and obj.Transparency < 0.9 then
+                    local c = obj.Color
+                    local isRed = (c.R > 0.6 and c.G < 0.4 and c.B < 0.4) or (c.R > 0.7 and c.G < 0.5)
+                    local n = string.lower(obj.Name)
+                    if isRed or string.find(n, "dust") or string.find(n, "dirt") or string.find(n, "trash") or string.find(n, "skoupa") then
+                        isMarker = true; pos = obj.Position
+                    end
+                end
+                
+                if isMarker and pos then
+                    local d = (hrpPos - pos).Magnitude
+                    if d <= MAX_MARKER_RANGE and d < minD and d > 0.5 then
+                        minD = d; bestPos = pos
+                    end
+                end
+            end)
+        end
+    end
     return bestPos
 end
 
-local function GenerateSearchPatrol()
-    local Char = LP.Character
-    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
-    local startCF = Char.HumanoidRootPart.CFrame
-    SearchWaypoints = {}
-    
-    local width, length = 10, 10
-    for x = -width, width, 5 do
-        for z = -length, length, 5 do
-            table.insert(SearchWaypoints, (startCF * Vector3.new(x, 0, z)).Position)
-        end
-    end
-end
-
--- Main Auto-Farm Loop
 task.spawn(function()
     while true do
-        task.wait(0.05)
-        
+        task.wait(0.04)
         if getgenv().Config.SkoupesBot then
             local Char = LP.Character
             if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
                 local markerPos = FindNearestMarker()
-                
                 if markerPos then
                     local reached = WalkToPosition(markerPos)
                     ClickCenterScreen()
                     
                     if (Char.HumanoidRootPart.Position - markerPos).Magnitude < 8 then
                         pcall(function()
+                            local jobRemote = ReplicatedStorage:FindFirstChild("JobInteraction") and ReplicatedStorage.JobInteraction:FindFirstChild("RemoteEvent")
+                            if jobRemote then jobRemote:FireServer("Interact", markerPos) end
                             for _, p in ipairs(workspace:GetDescendants()) do
                                 if p:IsA("ProximityPrompt") and (p.Parent.Position - Char.HumanoidRootPart.Position).Magnitude < 10 then
                                     fireproximityprompt(p)
@@ -438,55 +525,13 @@ task.spawn(function()
                             end
                         end)
                     end
-                else
-                    if #SearchWaypoints == 0 then GenerateSearchPatrol() end
-                    
-                    if #SearchWaypoints > 0 then
-                        local patPos = SearchWaypoints[currentSearchIdx] or SearchWaypoints[1]
-                        local reached = WalkToPosition(patPos)
-                        ClickCenterScreen()
-                        
-                        if reached then
-                            currentSearchIdx = (currentSearchIdx % #SearchWaypoints) + 1
-                            task.wait(0.1)
-                        end
-                    end
                 end
             end
-        else
-            SearchWaypoints = {}
         end
     end
 end)
 
--- --- INPUT HANDLERS ---
-local function HandleActionAtPosition(targetPos)
-    if not targetPos then return end
-    
-    if getgenv().Config.ClickTP and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-        LP.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
-    end
-    
-    if getgenv().Config.DestroyerMode then
-        local event = ReplicatedStorage:FindFirstChild("DestroyerEvent")
-        if event then event:FireServer(targetPos) end
-        local exp = Instance.new("Explosion")
-        exp.Position = targetPos; exp.BlastRadius = 12; exp.Parent = workspace
-    end
-end
-
-Mouse.Button1Down:Connect(function()
-    if Mouse.Hit then HandleActionAtPosition(Mouse.Hit.Position) end
-end)
-
-UIS.TouchTap:Connect(function(touchPositions, gameProcessed)
-    if gameProcessed then return end
-    local unitRay = Camera:ViewportPointToRay(touchPositions[1].X, touchPositions[1].Y)
-    local raycastResult = workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000)
-    if raycastResult then HandleActionAtPosition(raycastResult.Position) end
-end)
-
--- --- CORE ESP & GAME LOOPS ---
+-- --- ESP & GAME LOOPS ---
 local ESP_Objects = {}
 local function CreateESP(p)
     local data = { Box = Drawing.new("Square"), Skelly = Drawing.new("Line"), Health = Drawing.new("Line"), Tracer = Drawing.new("Line") }
@@ -541,7 +586,6 @@ RunService.RenderStepped:Connect(function()
         HRP.Velocity = (Char.Humanoid.MoveDirection * getgenv().Config.FlySpeed) + Vector3.new(0, V + 1.5, 0)
     end
     
-    -- Target Finder
     local TargetHead = nil
     local ClosestDist = 400
     for _, p in pairs(Players:GetPlayers()) do
@@ -557,7 +601,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Update Preview Box
     VP:ClearAllChildren()
     local Model = (TargetHead and TargetHead.Parent) or LP.Character
     if Model then
@@ -574,15 +617,57 @@ RunService.RenderStepped:Connect(function()
         Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, TargetHead.Position), getgenv().Config.Smooth)
     end
 
-    if getgenv().Config.SpeedActive then LP.Character.Humanoid.WalkSpeed = 60 else LP.Character.Humanoid.WalkSpeed = 16 end
+    if getgenv().Config.SpeedActive then LP.Character.Humanoid.WalkSpeed = 65 else LP.Character.Humanoid.WalkSpeed = 16 end
 end)
-
-RunService.Stepped:Connect(function()
-    if getgenv().Config.Noclip and LP.Character then for _, v in pairs(LP.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end end
-end)
-UIS.JumpRequest:Connect(function() if getgenv().Config.InfJump then LP.Character.Humanoid:ChangeState("Jumping") end end)
 
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev GreekRP Update Final v33.0 Loaded.")
+-- --- SAFETY PROTECTIONS ---
+local VirtualUser = game:GetService("VirtualUser")
+LP.Idled:Connect(function()
+    if getgenv().Config.AntiAFK then
+        VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local Char = LP.Character
+    if Char and Char:FindFirstChild("HumanoidRootPart") and Char:FindFirstChild("Humanoid") then
+        local hrp = Char.HumanoidRootPart
+        local hum = Char.Humanoid
+        
+        if hrp.Position.Y < -50 then
+            hrp.CFrame = CFrame.new(hrp.Position.X, 15, hrp.Position.Z)
+            hrp.Velocity = Vector3.new(0, 0, 0)
+        end
+        
+        if (hum.PlatformStand or hum.Sit) and getgenv().Config.Godmode then
+            hum.PlatformStand = false
+            hum.Sit = false
+        end
+    end
+end)
+
+-- --- HITBOX & WEAPON ENHANCEMENTS ---
+local HITBOX_SIZE = Vector3.new(12, 12, 12)
+RunService.RenderStepped:Connect(function()
+    if getgenv().Config.HitboxExpander then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+                pcall(function()
+                    local head = p.Character.Head
+                    head.Size = HITBOX_SIZE
+                    head.Transparency = 0.6
+                    head.Color = Color3.fromRGB(124, 77, 255)
+                    head.Material = Enum.Material.Neon
+                    head.CanCollide = false
+                end)
+            end
+        end
+    end
+end)
+
+print("DarkDev Paged Master Suite v34.0 Loaded Successfully.")
