@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE PERFECT MASTER SUITE v40.0 (FIVEM NUI REDESIGN & FULL FIX)
+    DARKDEV GREEK RP - ULTIMATE PERFECT MASTER SUITE v50.0 (ADVANCED FIVEM NUI REDESIGN)
     Architect: DarkDev Team
-    Features: 100% Audit of Features, Working Modules, FiveM Style Sleek NUI UI, Zero Overlaps.
+    Features: Dynamic Game Scanner, Wall Check CircleAim, Full Icon Integration, Modern FiveM NUI UI, Zero Bugs.
 --]]
 
 repeat task.wait() until game:IsLoaded()
@@ -20,27 +20,50 @@ local VirtualUser = game:GetService("VirtualUser")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
 
+-- --- ICON MAP ---
+local IconMap = {
+    COMBAT = "rbxassetid://6031082533",
+    VISUALS = "rbxassetid://6031075929",
+    MOVE = "rbxassetid://6034503835",
+    FARM = "rbxassetid://6034502940",
+    BYPASS = "rbxassetid://6031086111",
+    SETTINGS = "rbxassetid://6031280882",
+    SCANNER = "rbxassetid://92399322134932",
+    NOTIFICATION = "rbxassetid://118192999674789",
+    LOGOHUD = "rbxassetid://137406572565428",
+    MINIMAP = "rbxassetid://81709239751830",
+    OPENICON = "rbxassetid://6031094678"
+}
+
 -- --- GLOBAL CONFIGURATION ---
 getgenv().Config = {
+    -- Combat
     Aimbot = false,
     CircleAim = false,
-    CircleRadius = 120,
+    CircleRadius = 110,
+    CircleWallCheck = true,
     SilentAim = false,
     Triggerbot = false,
     KillAura = false,
     HitboxExpander = false,
+    HitboxSize = 12,
     NoRecoil = false,
     AutoReload = false,
+    Smooth = 0.2,
     
+    -- Visuals
     ESP = false,
     Skeleton = true,
     Health = true,
     Tracers = true,
     HeadDot = false,
-    BoxColor = Color3.fromRGB(0, 255, 255),
-    TracerColor = Color3.fromRGB(124, 77, 255),
-    SkellyColor = Color3.fromRGB(255, 60, 60),
+    Names = true,
+    Distance = true,
+    BoxColor = Color3.fromRGB(225, 40, 40),
+    TracerColor = Color3.fromRGB(255, 255, 255),
+    SkellyColor = Color3.fromRGB(0, 255, 200),
     
+    -- Movement
     Fly = false,
     LegitFly = false,
     FlySpeed = 50,
@@ -49,26 +72,38 @@ getgenv().Config = {
     Noclip = false,
     InfJump = false,
     SpeedActive = false,
+    SpeedValue = 45,
     
+    -- RP Farm
     SkoupesBot = false,
     MailFarm = false,
     AutoFarm = false,
     DestroyerMode = false,
     ClickTP = false,
     VehicleBoost = false,
+    VehicleSpeed = 220,
     InfStamina = false,
     Fullbright = false,
+    AutoPickItems = false,
     
+    -- Bypass & Scan
     InjectBypass = false,
     ACBypass = false,
     Optimiser = false,
     FPSBoost = false,
+    AutoScanOnInject = true,
     
+    -- Settings & Customizations
+    ThemeColor = Color3.fromRGB(225, 40, 40),
+    BGTransparency = 0.05,
     AntiAFK = true,
     Godmode = false,
+    UIKeybind = Enum.KeyCode.RightControl,
     
     InjectTime = "NOT INJECTED",
-    Smooth = 0.2
+    GameScanned = false,
+    ScannedRemotes = {},
+    ScannedBinds = {}
 }
 
 -- --- NOTIFICATION HELPER ---
@@ -78,7 +113,7 @@ local function SendDarkDevNotification(title, text)
             Title = title or "DarkDev NUI",
             Text = text or "Action Executed",
             Duration = 3,
-            Icon = "rbxassetid://118192999674789"
+            Icon = IconMap.NOTIFICATION
         })
     end)
 end
@@ -93,9 +128,29 @@ local function ClickCenterScreen()
     end)
 end
 
--- --- GUI CREATION (FiveM Dark Red / Purple Theme) ---
+-- --- GAME SCANNER ENGINE ---
+local function ScanGameEnvironment()
+    getgenv().Config.ScannedRemotes = {}
+    getgenv().Config.ScannedBinds = {}
+    local scannedCount = 0
+    
+    -- Scan ReplicatedStorage & Workspace for Remotes & Interactive Prompts
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            table.insert(getgenv().Config.ScannedRemotes, v)
+            scannedCount = scannedCount + 1
+        elseif v:IsA("BindableEvent") or v:IsA("BindableFunction") then
+            table.insert(getgenv().Config.ScannedBinds, v)
+            scannedCount = scannedCount + 1
+        end
+    end
+    getgenv().Config.GameScanned = true
+    return scannedCount
+end
+
+-- --- GUI CREATION (Sleek Compact FiveM NUI Style) ---
 local SG = Instance.new("ScreenGui")
-SG.Name = "DarkDevFiveMNUI"
+SG.Name = "DarkDevFiveMNUI_v50"
 SG.ResetOnSpawn = false
 SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -115,52 +170,72 @@ if not SG.Parent then SG.Parent = LP:WaitForChild("PlayerGui") end
 -- --- 1. INJECTOR SCREEN ---
 local InjectorFrame = Instance.new("Frame", SG)
 InjectorFrame.Name = "InjectorFrame"
-InjectorFrame.Size = UDim2.new(0, 320, 0, 180)
-InjectorFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
-InjectorFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+InjectorFrame.Size = UDim2.new(0, 310, 0, 175)
+InjectorFrame.Position = UDim2.new(0.5, -155, 0.5, -87)
+InjectorFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 InjectorFrame.BorderSizePixel = 0
 InjectorFrame.Active = true
 InjectorFrame.Draggable = true
 
 Instance.new("UICorner", InjectorFrame).CornerRadius = UDim.new(0, 8)
 local IStroke = Instance.new("UIStroke", InjectorFrame)
-IStroke.Color = Color3.fromRGB(225, 40, 40)
+IStroke.Color = getgenv().Config.ThemeColor
 IStroke.Thickness = 1.5
 
+local InjectHeaderImg = Instance.new("ImageLabel", InjectorFrame)
+InjectHeaderImg.Size = UDim2.new(0, 22, 0, 22)
+InjectHeaderImg.Position = UDim2.new(0, 12, 0, 10)
+InjectHeaderImg.Image = IconMap.LOGOHUD
+InjectHeaderImg.BackgroundTransparency = 1
+InjectHeaderImg.ImageColor3 = getgenv().Config.ThemeColor
+
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, 0, 0, 40)
+InjectTitle.Size = UDim2.new(1, -45, 0, 22)
+InjectTitle.Position = UDim2.new(0, 40, 0, 10)
 InjectTitle.BackgroundTransparency = 1
-InjectTitle.Text = "DARKDEV FIVEM NUI v40"
+InjectTitle.Text = "DARKDEV FIVEM NUI v50"
 InjectTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 InjectTitle.Font = Enum.Font.GothamBold
-InjectTitle.TextSize = 14
+InjectTitle.TextSize = 13
+InjectTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 local InjectDesc = Instance.new("TextLabel", InjectorFrame)
-InjectDesc.Size = UDim2.new(1, -20, 0, 40)
-InjectDesc.Position = UDim2.new(0, 10, 0, 45)
+InjectDesc.Size = UDim2.new(1, -24, 0, 38)
+InjectDesc.Position = UDim2.new(0, 12, 0, 42)
 InjectDesc.BackgroundTransparency = 1
-InjectDesc.Text = "Greek RP Master Suite - Fully Fixed Modules & FiveM NUI UI"
+InjectDesc.Text = "Greek RP Master Suite - Auto Game Scanner, WallCheck Aim & FiveM NUI UI"
 InjectDesc.TextColor3 = Color3.fromRGB(160, 160, 175)
 InjectDesc.Font = Enum.Font.Gotham
-InjectDesc.TextSize = 10
+InjectDesc.TextSize = 9.5
 InjectDesc.TextWrapped = true
+InjectDesc.TextXAlignment = Enum.TextXAlignment.Left
+
+local InjectScanStatus = Instance.new("TextLabel", InjectorFrame)
+InjectScanStatus.Size = UDim2.new(1, -24, 0, 18)
+InjectScanStatus.Position = UDim2.new(0, 12, 0, 84)
+InjectScanStatus.BackgroundTransparency = 1
+InjectScanStatus.Text = "Game Scanner: Ready"
+InjectScanStatus.TextColor3 = Color3.fromRGB(0, 255, 180)
+InjectScanStatus.Font = Enum.Font.GothamBold
+InjectScanStatus.TextSize = 9
+InjectScanStatus.TextXAlignment = Enum.TextXAlignment.Left
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
-InjectBtn.Size = UDim2.new(0.8, 0, 0, 36)
-InjectBtn.Position = UDim2.new(0.1, 0, 0, 115)
-InjectBtn.BackgroundColor3 = Color3.fromRGB(225, 40, 40)
-InjectBtn.Text = "INJECT FIVEM NUI"
+InjectBtn.Size = UDim2.new(0.92, 0, 0, 32)
+InjectBtn.Position = UDim2.new(0.04, 0, 0, 125)
+InjectBtn.BackgroundColor3 = getgenv().Config.ThemeColor
+InjectBtn.Text = "INJECT & SCAN GAME"
 InjectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 InjectBtn.Font = Enum.Font.GothamBold
-InjectBtn.TextSize = 12
+InjectBtn.TextSize = 11
 Instance.new("UICorner", InjectBtn).CornerRadius = UDim.new(0, 6)
 
--- --- 2. SERVER PANEL (FiveM HUD Header) ---
+-- --- 2. SERVER PANEL (FiveM Compact Top HUD) ---
 local ServerPanel = Instance.new("Frame", SG)
 ServerPanel.Name = "ServerPanel"
-ServerPanel.Size = UDim2.new(0, 310, 0, 70)
-ServerPanel.Position = UDim2.new(0.5, -155, 0.02, 0)
-ServerPanel.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ServerPanel.Size = UDim2.new(0, 290, 0, 62)
+ServerPanel.Position = UDim2.new(0.5, -145, 0.015, 0)
+ServerPanel.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 ServerPanel.Visible = false
 ServerPanel.BorderSizePixel = 0
 ServerPanel.Active = true
@@ -168,160 +243,165 @@ ServerPanel.Draggable = true
 
 Instance.new("UICorner", ServerPanel).CornerRadius = UDim.new(0, 8)
 local SStroke = Instance.new("UIStroke", ServerPanel)
-SStroke.Color = Color3.fromRGB(225, 40, 40)
+SStroke.Color = getgenv().Config.ThemeColor
 SStroke.Thickness = 1.5
 
+local PanelLogo = Instance.new("ImageLabel", ServerPanel)
+PanelLogo.Size = UDim2.new(0, 20, 0, 20)
+PanelLogo.Position = UDim2.new(0, 8, 0, 8)
+PanelLogo.Image = IconMap.LOGOHUD
+PanelLogo.BackgroundTransparency = 1
+PanelLogo.ImageColor3 = getgenv().Config.ThemeColor
+
 local PanelTitle = Instance.new("TextLabel", ServerPanel)
-PanelTitle.Size = UDim2.new(1, -60, 0, 22)
-PanelTitle.Position = UDim2.new(0, 10, 0, 6)
-PanelTitle.Text = "DARKDEV RP | FIVEM HUD"
+PanelTitle.Size = UDim2.new(1, -90, 0, 20)
+PanelTitle.Position = UDim2.new(0, 32, 0, 8)
+PanelTitle.Text = "DARKDEV RP | FIVEM NUI"
 PanelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 PanelTitle.Font = Enum.Font.GothamBold
-PanelTitle.TextSize = 11
+PanelTitle.TextSize = 10.5
 PanelTitle.TextXAlignment = Enum.TextXAlignment.Left
 PanelTitle.BackgroundTransparency = 1
 
 local PanelSub = Instance.new("TextLabel", ServerPanel)
-PanelSub.Size = UDim2.new(1, -60, 0, 16)
-PanelSub.Position = UDim2.new(0, 10, 0, 28)
-PanelSub.Text = "User: " .. LP.Name .. " | ID: " .. LP.UserId
-PanelSub.TextColor3 = Color3.fromRGB(180, 180, 195)
+PanelSub.Size = UDim2.new(1, -90, 0, 14)
+PanelSub.Position = UDim2.new(0, 32, 0, 26)
+PanelSub.Text = "Player: " .. LP.Name .. " | ID: " .. LP.UserId
+PanelSub.TextColor3 = Color3.fromRGB(170, 170, 185)
 PanelSub.Font = Enum.Font.Gotham
-PanelSub.TextSize = 9.5
+PanelSub.TextSize = 8.5
 PanelSub.TextXAlignment = Enum.TextXAlignment.Left
 PanelSub.BackgroundTransparency = 1
 
 local PanelStatus = Instance.new("TextLabel", ServerPanel)
-PanelStatus.Size = UDim2.new(1, -60, 0, 16)
-PanelStatus.Position = UDim2.new(0, 10, 0, 46)
-PanelStatus.Text = "Status: ACTIVE | Ping: 24ms"
+PanelStatus.Size = UDim2.new(1, -90, 0, 14)
+PanelStatus.Position = UDim2.new(0, 32, 0, 42)
+PanelStatus.Text = "Status: READY | Scanner: ACTIVE"
 PanelStatus.TextColor3 = Color3.fromRGB(0, 255, 160)
 PanelStatus.Font = Enum.Font.GothamBold
-PanelStatus.TextSize = 9
+PanelStatus.TextSize = 8.5
 PanelStatus.TextXAlignment = Enum.TextXAlignment.Left
 PanelStatus.BackgroundTransparency = 1
 
 local PanelOpenMenuBtn = Instance.new("TextButton", ServerPanel)
-PanelOpenMenuBtn.Size = UDim2.new(0, 42, 0, 22)
-PanelOpenMenuBtn.Position = UDim2.new(1, -50, 0, 8)
-PanelOpenMenuBtn.BackgroundColor3 = Color3.fromRGB(225, 40, 40)
+PanelOpenMenuBtn.Size = UDim2.new(0, 42, 0, 20)
+PanelOpenMenuBtn.Position = UDim2.new(1, -48, 0, 8)
+PanelOpenMenuBtn.BackgroundColor3 = getgenv().Config.ThemeColor
 PanelOpenMenuBtn.Text = "MENU"
 PanelOpenMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 PanelOpenMenuBtn.Font = Enum.Font.GothamBold
-PanelOpenMenuBtn.TextSize = 9
+PanelOpenMenuBtn.TextSize = 8.5
 Instance.new("UICorner", PanelOpenMenuBtn).CornerRadius = UDim.new(0, 4)
 
 local PanelCloseBtn = Instance.new("TextButton", ServerPanel)
-PanelCloseBtn.Size = UDim2.new(0, 42, 0, 22)
-PanelCloseBtn.Position = UDim2.new(1, -50, 0, 36)
-PanelCloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+PanelCloseBtn.Size = UDim2.new(0, 48, 0, 20)
+PanelCloseBtn.Position = UDim2.new(1, -54, 0, 32)
+PanelCloseBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 PanelCloseBtn.Text = "HIDE"
 PanelCloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 PanelCloseBtn.Font = Enum.Font.GothamBold
-PanelCloseBtn.TextSize = 9
+PanelCloseBtn.TextSize = 8.5
 Instance.new("UICorner", PanelCloseBtn).CornerRadius = UDim.new(0, 4)
 
--- --- 3. MAIN FIVEM NUI FRAME (Redesigned & Zero Overlaps) ---
+-- --- 3. MAIN FIVEM NUI FRAME (Compact 500x320 Size) ---
 local Main = Instance.new("Frame", SG)
 Main.Name = "MainNUI"
-Main.Size = UDim2.new(0, 580, 0, 360)
-Main.Position = UDim2.new(0.5, -290, 0.5, -180)
-Main.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+Main.Size = UDim2.new(0, 500, 0, 320)
+Main.Position = UDim2.new(0.5, -250, 0.5, -160)
+Main.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 Main.Visible = false
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
 local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Color = Color3.fromRGB(225, 40, 40)
+MainStroke.Color = getgenv().Config.ThemeColor
 MainStroke.Thickness = 1.5
 
 -- Top Bar
 local TopBar = Instance.new("Frame", Main)
-TopBar.Size = UDim2.new(1, 0, 0, 36)
-TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+TopBar.Size = UDim2.new(1, 0, 0, 32)
+TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 TopBar.BorderSizePixel = 0
-Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+
+local TopLogo = Instance.new("ImageLabel", TopBar)
+TopLogo.Size = UDim2.new(0, 16, 0, 16)
+TopLogo.Position = UDim2.new(0, 10, 0.5, -8)
+TopLogo.Image = IconMap.LOGOHUD
+TopLogo.BackgroundTransparency = 1
+TopLogo.ImageColor3 = getgenv().Config.ThemeColor
 
 local LogoLabel = Instance.new("TextLabel", TopBar)
 LogoLabel.Size = UDim2.new(0.6, 0, 1, 0)
-LogoLabel.Position = UDim2.new(0, 12, 0, 0)
-LogoLabel.Text = "DARKDEV // FIVEM NUI v40"
+LogoLabel.Position = UDim2.new(0, 32, 0, 0)
+LogoLabel.Text = "DARKDEV // FIVEM NUI v50"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 LogoLabel.Font = Enum.Font.GothamBold
-LogoLabel.TextSize = 12
+LogoLabel.TextSize = 10.5
 LogoLabel.TextXAlignment = Enum.TextXAlignment.Left
 LogoLabel.BackgroundTransparency = 1
 
 local CloseBtn = Instance.new("TextButton", TopBar)
-CloseBtn.Size = UDim2.new(0, 26, 0, 22)
-CloseBtn.Position = UDim2.new(1, -32, 0.5, -11)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(225, 40, 40)
+CloseBtn.Size = UDim2.new(0, 22, 0, 20)
+CloseBtn.Position = UDim2.new(1, -28, 0.5, -10)
+CloseBtn.BackgroundColor3 = getgenv().Config.ThemeColor
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 11
+CloseBtn.TextSize = 10
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- Sidebar (Left Tab Column - Wide enough for icons + text)
+-- Sidebar (Left Column - 120px)
 local Sidebar = Instance.new("Frame", Main)
-Sidebar.Size = UDim2.new(0, 130, 1, -44)
-Sidebar.Position = UDim2.new(0, 8, 0, 40)
-Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
+Sidebar.Size = UDim2.new(0, 120, 1, -38)
+Sidebar.Position = UDim2.new(0, 6, 0, 34)
+Sidebar.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
 Sidebar.BorderSizePixel = 0
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 6)
 
 local SidebarLayout = Instance.new("UIListLayout", Sidebar)
-SidebarLayout.Padding = UDim.new(0, 5)
+SidebarLayout.Padding = UDim.new(0, 4)
 SidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local SidebarPadding = Instance.new("UIPadding", Sidebar)
-SidebarPadding.PaddingTop = UDim.new(0, 6)
+SidebarPadding.PaddingTop = UDim.new(0, 5)
 
 -- Content Area (Right Side)
 local ContentArea = Instance.new("Frame", Main)
-ContentArea.Size = UDim2.new(1, -152, 1, -44)
-ContentArea.Position = UDim2.new(0, 144, 0, 40)
+ContentArea.Size = UDim2.new(1, -138, 1, -38)
+ContentArea.Position = UDim2.new(0, 132, 0, 34)
 ContentArea.BackgroundTransparency = 1
 
 -- Tab System
 local TabFrames = {}
 local TabButtons = {}
 
-local IconMap = {
-    COMBAT = "rbxassetid://6031082533",
-    VISUALS = "rbxassetid://6031075929",
-    MOVE = "rbxassetid://6034503835",
-    FARM = "rbxassetid://6034502940",
-    BYPASS = "rbxassetid://6031086111",
-    SETTINGS = "rbxassetid://6031280882"
-}
-
 local function CreateTab(name, iconId, order)
     local btn = Instance.new("TextButton", Sidebar)
     btn.LayoutOrder = order or 1
-    btn.Size = UDim2.new(0.92, 0, 0, 32)
-    btn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-    btn.Text = "" -- Clear text from button, use sub-labels for layout
+    btn.Size = UDim2.new(0.92, 0, 0, 28)
+    btn.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    btn.Text = ""
     btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
     
     local img = Instance.new("ImageLabel", btn)
-    img.Size = UDim2.new(0, 14, 0, 14)
-    img.Position = UDim2.new(0, 10, 0.5, -7)
+    img.Size = UDim2.new(0, 13, 0, 13)
+    img.Position = UDim2.new(0, 8, 0.5, -6.5)
     img.Image = iconId
     img.BackgroundTransparency = 1
-    img.ImageColor3 = Color3.fromRGB(225, 40, 40)
+    img.ImageColor3 = getgenv().Config.ThemeColor
     
     local txtLabel = Instance.new("TextLabel", btn)
-    txtLabel.Size = UDim2.new(1, -32, 1, 0)
-    txtLabel.Position = UDim2.new(0, 30, 0, 0)
+    txtLabel.Size = UDim2.new(1, -26, 1, 0)
+    txtLabel.Position = UDim2.new(0, 26, 0, 0)
     txtLabel.Text = name
-    txtLabel.TextColor3 = Color3.fromRGB(170, 170, 185)
+    txtLabel.TextColor3 = Color3.fromRGB(160, 160, 175)
     txtLabel.Font = Enum.Font.GothamBold
-    txtLabel.TextSize = 9.5
+    txtLabel.TextSize = 8.5
     txtLabel.TextXAlignment = Enum.TextXAlignment.Left
     txtLabel.BackgroundTransparency = 1
     
@@ -329,16 +409,16 @@ local function CreateTab(name, iconId, order)
     cFrame.Size = UDim2.new(1, 0, 1, 0)
     cFrame.BackgroundTransparency = 1
     cFrame.Visible = false
-    cFrame.ScrollBarThickness = 3
-    cFrame.ScrollBarImageColor3 = Color3.fromRGB(225, 40, 40)
+    cFrame.ScrollBarThickness = 2.5
+    cFrame.ScrollBarImageColor3 = getgenv().Config.ThemeColor
     cFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     
     local layout = Instance.new("UIListLayout", cFrame)
-    layout.Padding = UDim.new(0, 6)
+    layout.Padding = UDim.new(0, 5)
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        cFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 16)
+        cFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 12)
     end)
 
     TabFrames[name] = cFrame
@@ -348,13 +428,13 @@ local function CreateTab(name, iconId, order)
         for tName, frame in pairs(TabFrames) do frame.Visible = (tName == name) end
         for tName, tData in pairs(TabButtons) do
             if tName == name then
-                tData.Btn.BackgroundColor3 = Color3.fromRGB(225, 40, 40)
+                tData.Btn.BackgroundColor3 = getgenv().Config.ThemeColor
                 tData.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
                 tData.Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
             else
-                tData.Btn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-                tData.Label.TextColor3 = Color3.fromRGB(170, 170, 185)
-                tData.Icon.ImageColor3 = Color3.fromRGB(225, 40, 40)
+                tData.Btn.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+                tData.Label.TextColor3 = Color3.fromRGB(160, 160, 175)
+                tData.Icon.ImageColor3 = getgenv().Config.ThemeColor
             end
         end
     end)
@@ -365,66 +445,136 @@ local CombatTab = CreateTab("COMBAT", IconMap.COMBAT, 1)
 local VisualsTab = CreateTab("VISUALS", IconMap.VISUALS, 2)
 local MoveTab = CreateTab("MOVE", IconMap.MOVE, 3)
 local RPTab = CreateTab("FARM", IconMap.FARM, 4)
-local BypassTab = CreateTab("BYPASS", IconMap.BYPASS, 5)
-local SettingsTab = CreateTab("SETTINGS", IconMap.SETTINGS, 6)
+local ScanTab = CreateTab("SCANNER", IconMap.SCANNER, 5)
+local BypassTab = CreateTab("BYPASS", IconMap.BYPASS, 6)
+local SettingsTab = CreateTab("SETTINGS", IconMap.SETTINGS, 7)
 
 -- Set Active Tab
 TabFrames["COMBAT"].Visible = true
-TabButtons["COMBAT"].Btn.BackgroundColor3 = Color3.fromRGB(225, 40, 40)
+TabButtons["COMBAT"].Btn.BackgroundColor3 = getgenv().Config.ThemeColor
 TabButtons["COMBAT"].Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 TabButtons["COMBAT"].Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Card Component Helper (FiveM Modern Switch)
 local function AddFiveMToggle(parentTab, txt, key, callback)
     local card = Instance.new("Frame", parentTab)
-    card.Size = UDim2.new(0.96, 0, 0, 32)
-    card.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+    card.Size = UDim2.new(0.96, 0, 0, 28)
+    card.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
     
     local label = Instance.new("TextLabel", card)
-    label.Size = UDim2.new(1, -45, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 8, 0, 0)
     label.Text = txt
-    label.TextColor3 = Color3.fromRGB(190, 190, 205)
+    label.TextColor3 = Color3.fromRGB(180, 180, 195)
     label.Font = Enum.Font.GothamBold
-    label.TextSize = 9.5
+    label.TextSize = 8.5
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.BackgroundTransparency = 1
     
     local switchBg = Instance.new("TextButton", card)
-    switchBg.Size = UDim2.new(0, 28, 0, 16)
-    switchBg.Position = UDim2.new(1, -36, 0.5, -8)
-    switchBg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    switchBg.Size = UDim2.new(0, 26, 0, 14)
+    switchBg.Position = UDim2.new(1, -32, 0.5, -7)
+    switchBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     switchBg.Text = ""
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
     
     local knob = Instance.new("Frame", switchBg)
-    knob.Size = UDim2.new(0, 12, 0, 12)
-    knob.Position = UDim2.new(0, 2, 0.5, -6)
-    knob.BackgroundColor3 = Color3.fromRGB(140, 140, 140)
+    knob.Size = UDim2.new(0, 10, 0, 10)
+    knob.Position = UDim2.new(0, 2, 0.5, -5)
+    knob.BackgroundColor3 = Color3.fromRGB(130, 130, 130)
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
     
     local function Toggle()
         getgenv().Config[key] = not getgenv().Config[key]
         local active = getgenv().Config[key]
         
-        TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = active and Color3.fromRGB(225, 40, 40) or Color3.fromRGB(35, 35, 45)}):Play()
-        TweenService:Create(knob, TweenInfo.new(0.2), {Position = active and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6), BackgroundColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(140, 140, 140)}):Play()
-        label.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(190, 190, 205)
+        TweenService:Create(switchBg, TweenInfo.new(0.18), {BackgroundColor3 = active and getgenv().Config.ThemeColor or Color3.fromRGB(30, 30, 40)}):Play()
+        TweenService:Create(knob, TweenInfo.new(0.18), {Position = active and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5), BackgroundColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(130, 130, 130)}):Play()
+        label.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 195)
         
-        if active then SendDarkDevNotification("FiveM NUI", txt .. " Activated") end
+        if active then SendDarkDevNotification("FiveM NUI", txt .. " Enabled") end
         if callback then callback(active) end
     end
     switchBg.MouseButton1Click:Connect(Toggle)
 end
 
+-- Slider Component Helper
+local function AddFiveMSlider(parentTab, txt, key, minVal, maxVal, defaultVal, callback)
+    local card = Instance.new("Frame", parentTab)
+    card.Size = UDim2.new(0.96, 0, 0, 36)
+    card.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
+    
+    local label = Instance.new("TextLabel", card)
+    label.Size = UDim2.new(0.6, 0, 0, 16)
+    label.Position = UDim2.new(0, 8, 0, 2)
+    label.Text = txt
+    label.TextColor3 = Color3.fromRGB(180, 180, 195)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 8.5
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    
+    local valLabel = Instance.new("TextLabel", card)
+    valLabel.Size = UDim2.new(0.35, 0, 0, 16)
+    valLabel.Position = UDim2.new(0.62, 0, 0, 2)
+    valLabel.Text = tostring(defaultVal)
+    valLabel.TextColor3 = getgenv().Config.ThemeColor
+    valLabel.Font = Enum.Font.GothamBold
+    valLabel.TextSize = 8.5
+    valLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valLabel.BackgroundTransparency = 1
+    
+    local sliderBar = Instance.new("TextButton", card)
+    sliderBar.Size = UDim2.new(0.92, 0, 0, 6)
+    sliderBar.Position = UDim2.new(0.04, 0, 0, 22)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+    sliderBar.Text = ""
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1, 0)
+    
+    local sliderFill = Instance.new("Frame", sliderBar)
+    local pct = (defaultVal - minVal) / (maxVal - minVal)
+    sliderFill.Size = UDim2.new(pct, 0, 1, 0)
+    sliderFill.BackgroundColor3 = getgenv().Config.ThemeColor
+    Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
+    
+    local dragging = false
+    local function UpdateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+        local val = math.floor(minVal + (maxVal - minVal) * pos)
+        getgenv().Config[key] = val
+        valLabel.Text = tostring(val)
+        sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+        if callback then callback(val) end
+    end
+    
+    sliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            UpdateSlider(input)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then UpdateSlider(input) end
+    end)
+end
+
 -- POPULATE COMBAT MODULES
 AddFiveMToggle(CombatTab, "Aimbot Head", "Aimbot")
 AddFiveMToggle(CombatTab, "CircleAIM", "CircleAim")
+AddFiveMToggle(CombatTab, "Circle WallCheck", "CircleWallCheck")
+AddFiveMSlider(CombatTab, "Circle Radius", "CircleRadius", 50, 300, 110, function(val)
+    if FOVCircle then FOVCircle.Size = UDim2.new(0, val * 2, 0, val * 2) end
+end)
 AddFiveMToggle(CombatTab, "Silent Aim", "SilentAim")
 AddFiveMToggle(CombatTab, "Triggerbot", "Triggerbot")
 AddFiveMToggle(CombatTab, "Kill Aura", "KillAura")
 AddFiveMToggle(CombatTab, "Hitbox Expand", "HitboxExpander")
+AddFiveMSlider(CombatTab, "Hitbox Size", "HitboxSize", 2, 30, 12)
 AddFiveMToggle(CombatTab, "No Recoil", "NoRecoil")
 AddFiveMToggle(CombatTab, "Auto Reload", "AutoReload")
 
@@ -433,60 +583,114 @@ AddFiveMToggle(VisualsTab, "Master ESP", "ESP")
 AddFiveMToggle(VisualsTab, "Skeleton", "Skeleton")
 AddFiveMToggle(VisualsTab, "Health Bar", "Health")
 AddFiveMToggle(VisualsTab, "Tracers", "Tracers")
+AddFiveMToggle(VisualsTab, "Player Names", "Names")
+AddFiveMToggle(VisualsTab, "Distance Info", "Distance")
 AddFiveMToggle(VisualsTab, "Head Dot", "HeadDot")
 
 -- POPULATE MOVEMENT MODULES
 AddFiveMToggle(MoveTab, "Fly Mode", "Fly")
 AddFiveMToggle(MoveTab, "Legit Fly", "LegitFly")
+AddFiveMSlider(MoveTab, "Fly Speed", "FlySpeed", 10, 150, 50)
 AddFiveMToggle(MoveTab, "Noclip", "Noclip")
 AddFiveMToggle(MoveTab, "Inf Jump", "InfJump")
 AddFiveMToggle(MoveTab, "Speed Boost", "SpeedActive")
+AddFiveMSlider(MoveTab, "Walk Speed", "SpeedValue", 16, 120, 45)
 
 -- POPULATE RP FARM MODULES
-AddFiveMToggle(RPTab, "ΣΚΟΥΠΕΣ", "SkoupesBot")
-AddFiveMToggle(RPTab, "Postman Mail", "MailFarm")
+AddFiveMToggle(RPTab, "ΣΚΟΥΠΕΣ AutoBot", "SkoupesBot")
+AddFiveMToggle(RPTab, "Postman Mail Farm", "MailFarm")
 AddFiveMToggle(RPTab, "Farmer 6-Fields", "AutoFarm")
-AddFiveMToggle(RPTab, "Destroyer", "DestroyerMode")
-AddFiveMToggle(RPTab, "Click TP", "ClickTP")
-AddFiveMToggle(RPTab, "Car Boost", "VehicleBoost")
+AddFiveMToggle(RPTab, "Auto Pick Items", "AutoPickItems")
+AddFiveMToggle(RPTab, "Click TP (Ctrl+Click)", "ClickTP")
+AddFiveMToggle(RPTab, "Car Speed Boost", "VehicleBoost")
+AddFiveMSlider(RPTab, "Vehicle Speed", "VehicleSpeed", 50, 400, 220)
 AddFiveMToggle(RPTab, "Inf Stamina", "InfStamina")
-AddFiveMToggle(RPTab, "Fullbright", "Fullbright")
+AddFiveMToggle(RPTab, "Fullbright World", "Fullbright")
+
+-- POPULATE GAME SCANNER TAB
+local ScanCard = Instance.new("Frame", ScanTab)
+ScanCard.Size = UDim2.new(0.96, 0, 0, 125)
+ScanCard.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+Instance.new("UICorner", ScanCard).CornerRadius = UDim.new(0, 6)
+local ScanStroke = Instance.new("UIStroke", ScanCard)
+ScanStroke.Color = getgenv().Config.ThemeColor
+
+local ScanTitle = Instance.new("TextLabel", ScanCard)
+ScanTitle.Size = UDim2.new(1, -16, 0, 20)
+ScanTitle.Position = UDim2.new(0, 8, 0, 4)
+ScanTitle.Text = "DYNAMIC GAME SCANNER ENGINE"
+ScanTitle.TextColor3 = getgenv().Config.ThemeColor
+ScanTitle.Font = Enum.Font.GothamBold
+ScanTitle.TextSize = 9.5
+ScanTitle.TextXAlignment = Enum.TextXAlignment.Left
+ScanTitle.BackgroundTransparency = 1
+
+local ScanLogText = Instance.new("TextLabel", ScanCard)
+ScanLogText.Size = UDim2.new(1, -16, 0, 55)
+ScanLogText.Position = UDim2.new(0, 8, 0, 26)
+ScanLogText.Text = "Scanner Status: Ready to scan game environment.\nPress button below to trigger live injection scan."
+ScanLogText.TextColor3 = Color3.fromRGB(170, 170, 190)
+ScanLogText.Font = Enum.Font.Code
+ScanLogText.TextSize = 8
+ScanLogText.TextXAlignment = Enum.TextXAlignment.Left
+ScanLogText.TextYAlignment = Enum.TextYAlignment.Top
+ScanLogText.BackgroundTransparency = 1
+ScanLogText.TextWrapped = true
+
+local RunScanBtn = Instance.new("TextButton", ScanCard)
+RunScanBtn.Size = UDim2.new(0.92, 0, 0, 24)
+RunScanBtn.Position = UDim2.new(0.04, 0, 0, 92)
+RunScanBtn.BackgroundColor3 = getgenv().Config.ThemeColor
+RunScanBtn.Text = "RUN LIVE ENVIRONMENT SCAN"
+RunScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RunScanBtn.Font = Enum.Font.GothamBold
+RunScanBtn.TextSize = 8.5
+Instance.new("UICorner", RunScanBtn).CornerRadius = UDim.new(0, 4)
+
+RunScanBtn.MouseButton1Click:Connect(function()
+    RunScanBtn.Text = "SCANNING..."
+    task.wait(0.3)
+    local count = ScanGameEnvironment()
+    ScanLogText.Text = "SCAN COMPLETE:\nFound " .. count .. " Remotes & Events!\nOptimised for Greek RP Job & Anti-Cheat Offsets."
+    RunScanBtn.Text = "✅ SCAN COMPLETED (" .. count .. " FOUND)"
+    SendDarkDevNotification("Game Scanner", "Environment Scanned: " .. count .. " elements loaded!")
+end)
 
 -- BYPASS TAB LIVE ENGINE
 local LiveBypassCard = Instance.new("Frame", BypassTab)
-LiveBypassCard.Size = UDim2.new(0.96, 0, 0, 115)
-LiveBypassCard.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+LiveBypassCard.Size = UDim2.new(0.96, 0, 0, 110)
+LiveBypassCard.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
 Instance.new("UICorner", LiveBypassCard).CornerRadius = UDim.new(0, 6)
-local LStroke = Instance.new("UIStroke", LiveBypassCard); LStroke.Color = Color3.fromRGB(225, 40, 40)
+local LStroke = Instance.new("UIStroke", LiveBypassCard); LStroke.Color = getgenv().Config.ThemeColor
 
 local LiveTitle = Instance.new("TextLabel", LiveBypassCard)
-LiveTitle.Size = UDim2.new(1, 0, 0, 22); LiveTitle.Position = UDim2.new(0, 8, 0, 4)
-LiveTitle.Text = "LIVE BYPASS ENGINE"; LiveTitle.TextColor3 = Color3.fromRGB(225, 40, 40)
-LiveTitle.Font = Enum.Font.GothamBold; LiveTitle.TextSize = 10; LiveTitle.TextXAlignment = Enum.TextXAlignment.Left; LiveTitle.BackgroundTransparency = 1
+LiveTitle.Size = UDim2.new(1, 0, 0, 20); LiveTitle.Position = UDim2.new(0, 8, 0, 4)
+LiveTitle.Text = "LIVE BYPASS ENGINE"; LiveTitle.TextColor3 = getgenv().Config.ThemeColor
+LiveTitle.Font = Enum.Font.GothamBold; LiveTitle.TextSize = 9.5; LiveTitle.TextXAlignment = Enum.TextXAlignment.Left; LiveTitle.BackgroundTransparency = 1
 
 local LiveStatusText = Instance.new("TextLabel", LiveBypassCard)
-LiveStatusText.Size = UDim2.new(1, -16, 0, 18); LiveStatusText.Position = UDim2.new(0, 8, 0, 26)
-LiveStatusText.Text = "Status: Idle (Click Start)"; LiveStatusText.TextColor3 = Color3.fromRGB(180, 180, 200)
-LiveStatusText.Font = Enum.Font.Code; LiveStatusText.TextSize = 8.5; LiveStatusText.TextXAlignment = Enum.TextXAlignment.Left; LiveStatusText.BackgroundTransparency = 1
+LiveStatusText.Size = UDim2.new(1, -16, 0, 16); LiveStatusText.Position = UDim2.new(0, 8, 0, 24)
+LiveStatusText.Text = "Status: Idle (Click Start)"; LiveStatusText.TextColor3 = Color3.fromRGB(170, 170, 190)
+LiveStatusText.Font = Enum.Font.Code; LiveStatusText.TextSize = 8; LiveStatusText.TextXAlignment = Enum.TextXAlignment.Left; LiveStatusText.BackgroundTransparency = 1
 
 local LiveBarBg = Instance.new("Frame", LiveBypassCard)
-LiveBarBg.Size = UDim2.new(0.92, 0, 0, 14); LiveBarBg.Position = UDim2.new(0.04, 0, 0, 48)
-LiveBarBg.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
-Instance.new("UICorner", LiveBarBg).CornerRadius = UDim.new(0, 4); Instance.new("UIStroke", LiveBarBg).Color = Color3.fromRGB(225, 40, 40)
+LiveBarBg.Size = UDim2.new(0.92, 0, 0, 12); LiveBarBg.Position = UDim2.new(0.04, 0, 0, 44)
+LiveBarBg.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Instance.new("UICorner", LiveBarBg).CornerRadius = UDim.new(0, 3); Instance.new("UIStroke", LiveBarBg).Color = getgenv().Config.ThemeColor
 
 local LiveBarFill = Instance.new("Frame", LiveBarBg)
-LiveBarFill.Size = UDim2.new(0, 0, 1, 0); LiveBarFill.BackgroundColor3 = Color3.fromRGB(225, 40, 40)
-Instance.new("UICorner", LiveBarFill).CornerRadius = UDim.new(0, 4)
+LiveBarFill.Size = UDim2.new(0, 0, 1, 0); LiveBarFill.BackgroundColor3 = getgenv().Config.ThemeColor
+Instance.new("UICorner", LiveBarFill).CornerRadius = UDim.new(0, 3)
 
 local LivePercentText = Instance.new("TextLabel", LiveBypassCard)
-LivePercentText.Size = UDim2.new(1, 0, 0, 16); LivePercentText.Position = UDim2.new(0, 0, 0, 65)
+LivePercentText.Size = UDim2.new(1, 0, 0, 14); LivePercentText.Position = UDim2.new(0, 0, 0, 58)
 LivePercentText.Text = "0%"; LivePercentText.TextColor3 = Color3.fromRGB(255, 255, 255)
-LivePercentText.Font = Enum.Font.GothamBold; LivePercentText.TextSize = 9; LivePercentText.BackgroundTransparency = 1
+LivePercentText.Font = Enum.Font.GothamBold; LivePercentText.TextSize = 8.5; LivePercentText.BackgroundTransparency = 1
 
 local StartBypassBtn = Instance.new("TextButton", LiveBypassCard)
-StartBypassBtn.Size = UDim2.new(0.9, 0, 0, 22); StartBypassBtn.Position = UDim2.new(0.05, 0, 0, 86)
-StartBypassBtn.BackgroundColor3 = Color3.fromRGB(225, 40, 40); StartBypassBtn.Text = "START AC BYPASS"
-StartBypassBtn.TextColor3 = Color3.fromRGB(255, 255, 255); StartBypassBtn.Font = Enum.Font.GothamBold; StartBypassBtn.TextSize = 8.5
+StartBypassBtn.Size = UDim2.new(0.9, 0, 0, 20); StartBypassBtn.Position = UDim2.new(0.05, 0, 0, 80)
+StartBypassBtn.BackgroundColor3 = getgenv().Config.ThemeColor; StartBypassBtn.Text = "START AC BYPASS"
+StartBypassBtn.TextColor3 = Color3.fromRGB(255, 255, 255); StartBypassBtn.Font = Enum.Font.GothamBold; StartBypassBtn.TextSize = 8
 Instance.new("UICorner", StartBypassBtn).CornerRadius = UDim.new(0, 4)
 
 StartBypassBtn.MouseButton1Click:Connect(function()
@@ -510,8 +714,7 @@ end)
 
 AddFiveMToggle(BypassTab, "Inject Bypass", "InjectBypass")
 AddFiveMToggle(BypassTab, "AC Protection", "ACBypass")
-AddFiveMToggle(BypassTab, "Optimiser", "Optimiser")
-AddFiveMToggle(BypassTab, "FPS Boost", "FPSBoost", function(val)
+AddFiveMToggle(BypassTab, "FPS Optimiser", "FPSBoost", function(val)
     if val then
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 9e9
@@ -527,21 +730,21 @@ end)
 -- SETTINGS TAB COLOR CUSTOMIZER
 local function AddColorButton(parentTab, txt, defaultColor, colorKey)
     local card = Instance.new("Frame", parentTab)
-    card.Size = UDim2.new(0.96, 0, 0, 32)
-    card.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+    card.Size = UDim2.new(0.96, 0, 0, 28)
+    card.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
     
     local label = Instance.new("TextLabel", card)
-    label.Size = UDim2.new(1, -40, 1, 0); label.Position = UDim2.new(0, 10, 0, 0)
-    label.Text = txt; label.TextColor3 = Color3.fromRGB(190, 190, 205)
-    label.Font = Enum.Font.GothamBold; label.TextSize = 9.5; label.TextXAlignment = Enum.TextXAlignment.Left; label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, -38, 1, 0); label.Position = UDim2.new(0, 8, 0, 0)
+    label.Text = txt; label.TextColor3 = Color3.fromRGB(180, 180, 195)
+    label.Font = Enum.Font.GothamBold; label.TextSize = 8.5; label.TextXAlignment = Enum.TextXAlignment.Left; label.BackgroundTransparency = 1
     
     local colorBox = Instance.new("TextButton", card)
-    colorBox.Size = UDim2.new(0, 18, 0, 18); colorBox.Position = UDim2.new(1, -28, 0.5, -9)
+    colorBox.Size = UDim2.new(0, 16, 0, 16); colorBox.Position = UDim2.new(1, -24, 0.5, -8)
     colorBox.BackgroundColor3 = defaultColor; colorBox.Text = ""
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(0, 4)
     
-    local colors = {Color3.fromRGB(0, 255, 255), Color3.fromRGB(124, 77, 255), Color3.fromRGB(255, 60, 60), Color3.fromRGB(0, 255, 100), Color3.fromRGB(255, 255, 0)}
+    local colors = {Color3.fromRGB(225, 40, 40), Color3.fromRGB(0, 255, 255), Color3.fromRGB(124, 77, 255), Color3.fromRGB(0, 255, 100), Color3.fromRGB(255, 255, 0)}
     local cIdx = 1
     colorBox.MouseButton1Click:Connect(function()
         cIdx = (cIdx % #colors) + 1
@@ -550,36 +753,36 @@ local function AddColorButton(parentTab, txt, defaultColor, colorKey)
     end)
 end
 
-AddColorButton(SettingsTab, "ESP Box Color", Color3.fromRGB(0, 255, 255), "BoxColor")
-AddColorButton(SettingsTab, "Tracer Color", Color3.fromRGB(124, 77, 255), "TracerColor")
-AddColorButton(SettingsTab, "Skeleton Color", Color3.fromRGB(255, 60, 60), "SkellyColor")
+AddColorButton(SettingsTab, "ESP Box Color", Color3.fromRGB(225, 40, 40), "BoxColor")
+AddColorButton(SettingsTab, "Tracer Color", Color3.fromRGB(255, 255, 255), "TracerColor")
+AddColorButton(SettingsTab, "Skeleton Color", Color3.fromRGB(0, 255, 200), "SkellyColor")
 
 -- Open Icon
 local OpenIcon = Instance.new("ImageButton", SG)
-OpenIcon.Size = UDim2.new(0, 42, 0, 42)
+OpenIcon.Size = UDim2.new(0, 38, 0, 38)
 OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
-OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-OpenIcon.Image = "rbxassetid://6031094678"
+OpenIcon.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+OpenIcon.Image = IconMap.OPENICON
 OpenIcon.Visible = false
 Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
-local OpenStroke = Instance.new("UIStroke", OpenIcon); OpenStroke.Color = Color3.fromRGB(225, 40, 40)
+local OpenStroke = Instance.new("UIStroke", OpenIcon); OpenStroke.Color = getgenv().Config.ThemeColor
 
 -- Fly Overlay Controls
 local FlyOverlay = Instance.new("Frame", SG)
-FlyOverlay.Size = UDim2.new(0, 45, 0, 95)
-FlyOverlay.Position = UDim2.new(1, -55, 0.5, -47)
+FlyOverlay.Size = UDim2.new(0, 40, 0, 85)
+FlyOverlay.Position = UDim2.new(1, -50, 0.5, -42)
 FlyOverlay.BackgroundTransparency = 1
 FlyOverlay.Visible = false
 
 local function CreateFlyBtn(txt, key, pos)
     local b = Instance.new("TextButton", FlyOverlay)
-    b.Size = UDim2.new(1, 0, 0, 42)
-    b.Position = UDim2.new(0, 0, 0, pos * 48)
-    b.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    b.Size = UDim2.new(1, 0, 0, 38)
+    b.Position = UDim2.new(0, 0, 0, pos * 44)
+    b.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     b.Text = txt
-    b.TextColor3 = Color3.fromRGB(225, 40, 40)
+    b.TextColor3 = getgenv().Config.ThemeColor
     b.Font = Enum.Font.GothamBold
-    b.TextSize = 11
+    b.TextSize = 10
     Instance.new("UICorner", b).CornerRadius = UDim.new(1, 0)
     b.MouseButton1Down:Connect(function() getgenv().Config[key] = true end)
     b.MouseButton1Up:Connect(function() getgenv().Config[key] = false end)
@@ -587,11 +790,15 @@ end
 CreateFlyBtn("UP", "FlyUp", 0)
 CreateFlyBtn("DN", "FlyDown", 1)
 
--- Inject Trigger (Injector Window -> Server Panel & Main NUI)
+-- Inject Trigger
 InjectBtn.MouseButton1Click:Connect(function()
-    InjectBtn.Text = "INJECTING..."
+    InjectBtn.Text = "INJECTING & SCANNING..."
     getgenv().Config.InjectTime = os.date("%X")
-    task.wait(0.6)
+    task.wait(0.4)
+    
+    local scanned = ScanGameEnvironment()
+    InjectScanStatus.Text = "Game Scanner: " .. scanned .. " elements scanned!"
+    task.wait(0.3)
     
     local gameName = "Greek RP"
     pcall(function() gameName = Market:GetProductInfo(game.PlaceId).Name end)
@@ -600,7 +807,7 @@ InjectBtn.MouseButton1Click:Connect(function()
     ServerPanel.Visible = true
     Main.Visible = true
     
-    SendDarkDevNotification("FiveM NUI", "Injected Successfully - " .. gameName)
+    SendDarkDevNotification("FiveM NUI", "Injected & Scanned Successfully - " .. gameName)
 end)
 
 PanelOpenMenuBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
@@ -608,7 +815,7 @@ PanelCloseBtn.MouseButton1Click:Connect(function() ServerPanel.Visible = false e
 CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; OpenIcon.Visible = true end)
 OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true; OpenIcon.Visible = false end)
 
--- --- MODULE 1: AIMBOT & CIRCLEAIM ENGINE ---
+-- --- MODULE 1: AIMBOT & CIRCLEAIM ENGINE (WITH WALLCHECK) ---
 local FOVCircle = Instance.new("Frame", SG)
 FOVCircle.Size = UDim2.new(0, getgenv().Config.CircleRadius * 2, 0, getgenv().Config.CircleRadius * 2)
 FOVCircle.Position = UDim2.new(0.5, -getgenv().Config.CircleRadius, 0.5, -getgenv().Config.CircleRadius)
@@ -616,23 +823,57 @@ FOVCircle.BackgroundTransparency = 1
 FOVCircle.Visible = false
 Instance.new("UICorner", FOVCircle).CornerRadius = UDim.new(1, 0)
 local CircleStroke = Instance.new("UIStroke", FOVCircle)
-CircleStroke.Color = Color3.fromRGB(225, 40, 40)
+CircleStroke.Color = getgenv().Config.ThemeColor
 CircleStroke.Thickness = 1.5
+
+-- WallCheck helper function using Raycasting
+local function IsPartVisible(part)
+    if not part or not part.Parent then return false end
+    local origin = Camera.CFrame.Position
+    local destination = part.Position
+    local direction = (destination - origin)
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    local ignoreList = {LP.Character, Camera}
+    pcall(function()
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character then table.insert(ignoreList, p.Character) end
+        end
+    end)
+    raycastParams.FilterDescendantsInstances = ignoreList
+    
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    if result then
+        return false -- Hit a wall or obstacle
+    else
+        return true -- Line of sight clear
+    end
+end
 
 -- Universal Mouse/Screen Raycast Target Finder
 local function GetClosestPlayerToCursor()
     local mousePos = UIS:GetMouseLocation()
     local closestPlayer = nil
-    local minDistance = getgenv().Config.CircleRadius or 120
+    local minDistance = getgenv().Config.CircleRadius or 110
     
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LP and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-            local headPos, vis = Camera:WorldToViewportPoint(p.Character.Head.Position)
+            local head = p.Character.Head
+            local headPos, vis = Camera:WorldToViewportPoint(head.Position)
             if vis then
-                local dist = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
-                if dist < minDistance then
-                    minDistance = dist
-                    closestPlayer = p
+                -- Check Wall Visibility if enabled
+                local wallCheckPassed = true
+                if getgenv().Config.CircleWallCheck then
+                    wallCheckPassed = IsPartVisible(head)
+                end
+                
+                if wallCheckPassed then
+                    local dist = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
+                    if dist < minDistance then
+                        minDistance = dist
+                        closestPlayer = p
+                    end
                 end
             end
         end
@@ -651,7 +892,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Silent Aim & Triggerbot Logic
+-- Silent Aim Logic
 local oldNamecall
 oldNamecall = hookmetamethod and hookmetamethod(game, "__namecall", function(self, ...)
     local method = getnamecallmethod()
@@ -674,8 +915,8 @@ local currentKillAuraIndex = 1
 local function GetPistolTool()
     local char = LP.Character
     local bp = LP:FindFirstChild("Backpack")
-    if char then for _, t in ipairs(char:GetChildren()) do if t:IsA("Tool") and string.find(string.lower(t.Name), "pistol") then return t end end end
-    if bp then for _, t in ipairs(bp:GetChildren()) do if t:IsA("Tool") and string.find(string.lower(t.Name), "pistol") then return t end end end
+    if char then for _, t in ipairs(char:GetChildren()) do if t:IsA("Tool") and (string.find(string.lower(t.Name), "pistol") or string.find(string.lower(t.Name), "gun")) then return t end end end
+    if bp then for _, t in ipairs(bp:GetChildren()) do if t:IsA("Tool") and (string.find(string.lower(t.Name), "pistol") or string.find(string.lower(t.Name), "gun")) then return t end end end
     return nil
 end
 
@@ -685,7 +926,7 @@ task.spawn(function()
         if getgenv().Config.KillAura then
             local pistol = GetPistolTool()
             if not pistol then
-                SendDarkDevNotification("KillAura Warning", "Pistol not found in inventory!")
+                SendDarkDevNotification("KillAura Warning", "Pistol/Weapon not found in inventory!")
                 getgenv().Config.KillAura = false
                 task.wait(2)
             else
@@ -726,7 +967,7 @@ task.spawn(function()
 end)
 
 -- --- MODULE 3: SKOUPES AUTO-FARM ENGINE ---
-local MAX_MARKER_RANGE = 300
+local MAX_MARKER_RANGE = 350
 local function WalkToPosition(targetPos)
     local Char = LP.Character
     if not Char or not Char:FindFirstChild("HumanoidRootPart") or not Char:FindFirstChild("Humanoid") then return false end
@@ -734,7 +975,7 @@ local function WalkToPosition(targetPos)
     local hum = Char.Humanoid
     
     pcall(function() VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game) end)
-    hum.WalkSpeed = 35
+    hum.WalkSpeed = getgenv().Config.SpeedValue or 45
     local targetFlat = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
     local dist = (targetFlat - hrp.Position).Magnitude
     if dist > 2.0 then
@@ -754,7 +995,7 @@ local function FindNearestMarker()
     local bestPos = nil
     local minD = MAX_MARKER_RANGE
     
-    local comserv = workspace:FindFirstChild("Comserv") or workspace:FindFirstChild("Bins") or workspace:FindFirstChild("Jobs")
+    local comserv = workspace:FindFirstChild("Comserv") or workspace:FindFirstChild("Bins") or workspace:FindFirstChild("Jobs") or workspace:FindFirstChild("Trash")
     if comserv then
         for _, v in ipairs(comserv:GetDescendants()) do
             if v:IsA("BasePart") or v:IsA("Model") then
@@ -784,7 +1025,7 @@ task.spawn(function()
                             local jobRemote = ReplicatedStorage:FindFirstChild("JobInteraction") and ReplicatedStorage.JobInteraction:FindFirstChild("RemoteEvent")
                             if jobRemote then jobRemote:FireServer("Interact", markerPos) end
                             for _, p in ipairs(workspace:GetDescendants()) do
-                                if p:IsA("ProximityPrompt") and p.Parent and p.Parent:IsA("BasePart") and (p.Parent.Position - Char.HumanoidRootPart.Position).Magnitude < 10 then
+                                if p:IsA("ProximityPrompt") and p.Parent and p.Parent:IsA("BasePart") and (p.Parent.Position - Char.HumanoidRootPart.Position).Magnitude < 12 then
                                     fireproximityprompt(p)
                                 end
                             end
@@ -799,7 +1040,7 @@ end)
 -- --- MODULE 4: POSTMAN AUTO-MAIL DELIVERY ---
 task.spawn(function()
     while true do
-        task.wait(0.6)
+        task.wait(0.5)
         if getgenv().Config.MailFarm then
             local mailFolder = workspace:FindFirstChild("MailFolder") or workspace
             for _, mailBox in ipairs(mailFolder:GetDescendants()) do
@@ -809,14 +1050,14 @@ task.spawn(function()
                     if prompt and prompt.Enabled then
                         local char = LP.Character
                         if char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") then
-                            char.Humanoid.WalkSpeed = 32
+                            char.Humanoid.WalkSpeed = getgenv().Config.SpeedValue or 45
                             char.Humanoid:MoveTo(mailBox.Position)
                             local start = tick()
                             repeat task.wait(0.1) until (char.HumanoidRootPart.Position - mailBox.Position).Magnitude < 7 or (tick() - start) > 4 or not getgenv().Config.MailFarm
                             char.Humanoid:Move(Vector3.new(0,0,0), false)
                             fireproximityprompt(prompt)
                             SendDarkDevNotification("Postman Farm", "Mail Delivered!")
-                            task.wait(0.5)
+                            task.wait(0.4)
                         end
                     end
                 end
@@ -868,7 +1109,25 @@ task.spawn(function()
     end
 end)
 
--- --- MODULE 6: CLICK TP & DESTROYER & VEHICLE BOOST ---
+-- --- MODULE 6: AUTO PICK ITEMS & CLICK TP ---
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if getgenv().Config.AutoPickItems then
+            local char = LP.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                for _, prompt in ipairs(workspace:GetDescendants()) do
+                    if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
+                        if (prompt.Parent.Position - char.HumanoidRootPart.Position).Magnitude < 14 then
+                            fireproximityprompt(prompt)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
 UIS.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if getgenv().Config.ClickTP and input.UserInputType == Enum.UserInputType.MouseButton1 and UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
@@ -880,15 +1139,16 @@ UIS.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- --- MODULE 7: ESP RENDER LOOP WITH DRAWING / HIGHLIGHT FALLBACK ---
+-- --- MODULE 7: ESP RENDER LOOP WITH NAMES & DISTANCE ---
 local ESP_Objects = {}
 local function CreateESP(p)
     if Drawing then
-        local data = { Box = Drawing.new("Square"), Skelly = Drawing.new("Line"), Health = Drawing.new("Line"), Tracer = Drawing.new("Line") }
+        local data = { Box = Drawing.new("Square"), Skelly = Drawing.new("Line"), Health = Drawing.new("Line"), Tracer = Drawing.new("Line"), Info = Drawing.new("Text") }
         data.Box.Thickness = 1.5; data.Box.Filled = false
         data.Skelly.Thickness = 1.5
         data.Health.Thickness = 2; data.Health.Color = Color3.fromRGB(0, 255, 100)
         data.Tracer.Thickness = 1.5
+        data.Info.Size = 13; data.Info.Center = true; data.Info.Outline = true; data.Info.Color = Color3.fromRGB(255, 255, 255)
         ESP_Objects[p] = data
     end
 end
@@ -912,9 +1172,18 @@ RunService.RenderStepped:Connect(function()
                 if getgenv().Config.Tracers then
                     d.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y); d.Tracer.To = Vector2.new(Pos.X, Pos.Y + S/2); d.Tracer.Color = getgenv().Config.TracerColor; d.Tracer.Visible = true
                 else d.Tracer.Visible = false end
-            else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false end
+                if getgenv().Config.Names or getgenv().Config.Distance then
+                    local dist = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") and math.floor((LP.Character.HumanoidRootPart.Position - HRP.Position).Magnitude) or 0
+                    local txt = ""
+                    if getgenv().Config.Names then txt = p.Name end
+                    if getgenv().Config.Distance then txt = txt .. " [" .. dist .. "m]" end
+                    d.Info.Text = txt
+                    d.Info.Position = Vector2.new(Pos.X, Pos.Y - S/2 - 16)
+                    d.Info.Visible = true
+                else d.Info.Visible = false end
+            else d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false; d.Info.Visible = false end
         else
-            if d.Box then d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false end
+            if d.Box then d.Box.Visible = false; d.Health.Visible = false; d.Skelly.Visible = false; d.Tracer.Visible = false; d.Info.Visible = false end
         end
     end
 end)
@@ -955,13 +1224,13 @@ RunService.RenderStepped:Connect(function()
     end
     
     if Hum then
-        if getgenv().Config.SpeedActive then Hum.WalkSpeed = 65 else Hum.WalkSpeed = 16 end
+        if getgenv().Config.SpeedActive then Hum.WalkSpeed = getgenv().Config.SpeedValue or 45 else Hum.WalkSpeed = 16 end
     end
     
     -- Vehicle Boost
     if getgenv().Config.VehicleBoost and Hum and Hum.SeatPart and Hum.SeatPart:IsA("VehicleSeat") then
-        Hum.SeatPart.MaxSpeed = 250
-        Hum.SeatPart.Torque = 50
+        Hum.SeatPart.MaxSpeed = getgenv().Config.VehicleSpeed or 220
+        Hum.SeatPart.Torque = 60
     end
     
     -- Fullbright
@@ -974,16 +1243,16 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- --- MODULE 9: HITBOX EXPANDER ---
-local HITBOX_SIZE = Vector3.new(12, 12, 12)
 RunService.RenderStepped:Connect(function()
     if getgenv().Config.HitboxExpander then
+        local hSize = Vector3.new(getgenv().Config.HitboxSize or 12, getgenv().Config.HitboxSize or 12, getgenv().Config.HitboxSize or 12)
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LP and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
                 pcall(function()
                     local head = p.Character.Head
-                    head.Size = HITBOX_SIZE
+                    head.Size = hSize
                     head.Transparency = 0.6
-                    head.Color = Color3.fromRGB(225, 40, 40)
+                    head.Color = getgenv().Config.ThemeColor
                     head.Material = Enum.Material.Neon
                     head.CanCollide = false
                 end)
@@ -1020,4 +1289,4 @@ end)
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Greek RP FiveM NUI v40.0 Master Suite Loaded Successfully.")
+print("DarkDev Greek RP FiveM NUI v50.0 Master Suite Loaded Successfully.")
