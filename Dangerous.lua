@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE PERFECT MASTER SUITE v50.0 (ADVANCED FIVEM NUI REDESIGN)
+    DARKDEV GREEK RP - ULTIMATE PERFECT MASTER SUITE v60.0 (EXTREME FIVEM NUI REDESIGN)
     Architect: DarkDev Team
-    Features: Dynamic Game Scanner, Wall Check CircleAim, Full Icon Integration, Modern FiveM NUI UI, Zero Bugs.
+    Features: Multi-Run Safe, Webhook Logger, Anti-Fall Damage, Gravity Control, Enhanced Game Scanner, Custom Icon Support, WallCheck CircleAim.
 --]]
 
 repeat task.wait() until game:IsLoaded()
@@ -17,10 +17,19 @@ local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local VirtualUser = game:GetService("VirtualUser")
+local HttpService = game:GetService("HttpService")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
 
--- --- ICON MAP ---
+-- --- MULTI-RUN PROTECTION & CLEANUP ---
+if getgenv().DarkDevLoadedGui and getgenv().DarkDevLoadedGui.Parent then
+    pcall(function() getgenv().DarkDevLoadedGui:Destroy() end)
+end
+
+-- --- CONSTANTS & CUSTOM ICONS ---
+local CUSTOM_ICON_ID = "rbxassetid://128982287144996"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1532703873788285010/rwTo5AVK-jK7_vHZb9YmMZ1b_Tm7qG57KnFWN3ZBsKri6Bq8KnHomwLAaJydbeZELeXz"
+
 local IconMap = {
     COMBAT = "rbxassetid://6031082533",
     VISUALS = "rbxassetid://6031075929",
@@ -29,10 +38,9 @@ local IconMap = {
     BYPASS = "rbxassetid://6031086111",
     SETTINGS = "rbxassetid://6031280882",
     SCANNER = "rbxassetid://92399322134932",
-    NOTIFICATION = "rbxassetid://118192999674789",
-    LOGOHUD = "rbxassetid://137406572565428",
-    MINIMAP = "rbxassetid://81709239751830",
-    OPENICON = "rbxassetid://6031094678"
+    NOTIFICATION = CUSTOM_ICON_ID,
+    OPENICON = CUSTOM_ICON_ID,
+    LOGOHUD = "rbxassetid://137406572565428"
 }
 
 -- --- GLOBAL CONFIGURATION ---
@@ -63,7 +71,7 @@ getgenv().Config = {
     TracerColor = Color3.fromRGB(255, 255, 255),
     SkellyColor = Color3.fromRGB(0, 255, 200),
     
-    -- Movement
+    -- Movement & Physics
     Fly = false,
     LegitFly = false,
     FlySpeed = 50,
@@ -73,6 +81,10 @@ getgenv().Config = {
     InfJump = false,
     SpeedActive = false,
     SpeedValue = 45,
+    AntiFallDamage = true,
+    NoGravity = false,
+    GravityValue = 196.2,
+    LowGravity = false,
     
     -- RP Farm
     SkoupesBot = false,
@@ -95,7 +107,6 @@ getgenv().Config = {
     
     -- Settings & Customizations
     ThemeColor = Color3.fromRGB(225, 40, 40),
-    BGTransparency = 0.05,
     AntiAFK = true,
     Godmode = false,
     UIKeybind = Enum.KeyCode.RightControl,
@@ -106,14 +117,51 @@ getgenv().Config = {
     ScannedBinds = {}
 }
 
--- --- NOTIFICATION HELPER ---
+-- --- DISCORD WEBHOOK EXECUTION LOGGER ---
+local function SendDiscordExecutionLog()
+    task.spawn(function()
+        pcall(function()
+            local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+            if not requestFunc then return end
+            
+            local gameName = "Greek RP"
+            pcall(function() gameName = Market:GetProductInfo(game.PlaceId).Name end)
+            local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
+            local channelTag = isMobile and "#📂get-the-script-mobile" or "#📂get-the-script-pc"
+            
+            local embedData = {
+                ["title"] = "🚀 DarkDev live Exe",
+                ["description"] = "A new player has injected the DarkDev Greek RP Master Suite v60.0!",
+                ["color"] = 14700072, -- Crimson Red
+                ["fields"] = {
+                    { ["name"] = "New launch (time)", ["value"] = os.date("%Y-%m-%d %H:%M:%S") .. " (UTC)", ["inline"] = true },
+                    { ["name"] = "Player name", ["value"] = LP.Name .. " (@" .. LP.DisplayName .. ")", ["inline"] = true },
+                    { ["name"] = "Player id", ["value"] = tostring(LP.UserId), ["inline"] = true },
+                    { ["name"] = "Game Name", ["value"] = gameName .. " (" .. tostring(game.PlaceId) .. ")", ["inline"] = true },
+                    { ["name"] = "Platform Target", ["value"] = channelTag, ["inline"] = true }
+                },
+                ["footer"] = { ["text"] = "DarkDev Greek RP v60.0 Master Suite" }
+            }
+            
+            local payload = HttpService:JSONEncode({ ["embeds"] = { embedData } })
+            requestFunc({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = payload
+            })
+        end)
+    end)
+end
+
+-- --- NOTIFICATION HELPER (WITH CUSTOM ICON ID) ---
 local function SendDarkDevNotification(title, text)
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = title or "DarkDev NUI",
             Text = text or "Action Executed",
             Duration = 3,
-            Icon = IconMap.NOTIFICATION
+            Icon = CUSTOM_ICON_ID
         })
     end)
 end
@@ -134,7 +182,6 @@ local function ScanGameEnvironment()
     getgenv().Config.ScannedBinds = {}
     local scannedCount = 0
     
-    -- Scan ReplicatedStorage & Workspace for Remotes & Interactive Prompts
     for _, v in ipairs(game:GetDescendants()) do
         if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
             table.insert(getgenv().Config.ScannedRemotes, v)
@@ -148,11 +195,12 @@ local function ScanGameEnvironment()
     return scannedCount
 end
 
--- --- GUI CREATION (Sleek Compact FiveM NUI Style) ---
+-- --- GUI CREATION (Sleek FiveM NUI Style) ---
 local SG = Instance.new("ScreenGui")
-SG.Name = "DarkDevFiveMNUI_v50"
+SG.Name = "DarkDevFiveMNUI_v60"
 SG.ResetOnSpawn = false
 SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+getgenv().DarkDevLoadedGui = SG
 
 pcall(function()
     if gethui then
@@ -185,15 +233,14 @@ IStroke.Thickness = 1.5
 local InjectHeaderImg = Instance.new("ImageLabel", InjectorFrame)
 InjectHeaderImg.Size = UDim2.new(0, 22, 0, 22)
 InjectHeaderImg.Position = UDim2.new(0, 12, 0, 10)
-InjectHeaderImg.Image = IconMap.LOGOHUD
+InjectHeaderImg.Image = CUSTOM_ICON_ID
 InjectHeaderImg.BackgroundTransparency = 1
-InjectHeaderImg.ImageColor3 = getgenv().Config.ThemeColor
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
 InjectTitle.Size = UDim2.new(1, -45, 0, 22)
 InjectTitle.Position = UDim2.new(0, 40, 0, 10)
 InjectTitle.BackgroundTransparency = 1
-InjectTitle.Text = "DARKDEV FIVEM NUI v50"
+InjectTitle.Text = "DARKDEV FIVEM NUI v60"
 InjectTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 InjectTitle.Font = Enum.Font.GothamBold
 InjectTitle.TextSize = 13
@@ -203,7 +250,7 @@ local InjectDesc = Instance.new("TextLabel", InjectorFrame)
 InjectDesc.Size = UDim2.new(1, -24, 0, 38)
 InjectDesc.Position = UDim2.new(0, 12, 0, 42)
 InjectDesc.BackgroundTransparency = 1
-InjectDesc.Text = "Greek RP Master Suite - Auto Game Scanner, WallCheck Aim & FiveM NUI UI"
+InjectDesc.Text = "Greek RP Master Suite - Webhook Logging, Anti-Fall Damage, NoGravity & FiveM NUI UI"
 InjectDesc.TextColor3 = Color3.fromRGB(160, 160, 175)
 InjectDesc.Font = Enum.Font.Gotham
 InjectDesc.TextSize = 9.5
@@ -249,9 +296,8 @@ SStroke.Thickness = 1.5
 local PanelLogo = Instance.new("ImageLabel", ServerPanel)
 PanelLogo.Size = UDim2.new(0, 20, 0, 20)
 PanelLogo.Position = UDim2.new(0, 8, 0, 8)
-PanelLogo.Image = IconMap.LOGOHUD
+PanelLogo.Image = CUSTOM_ICON_ID
 PanelLogo.BackgroundTransparency = 1
-PanelLogo.ImageColor3 = getgenv().Config.ThemeColor
 
 local PanelTitle = Instance.new("TextLabel", ServerPanel)
 PanelTitle.Size = UDim2.new(1, -90, 0, 20)
@@ -276,7 +322,7 @@ PanelSub.BackgroundTransparency = 1
 local PanelStatus = Instance.new("TextLabel", ServerPanel)
 PanelStatus.Size = UDim2.new(1, -90, 0, 14)
 PanelStatus.Position = UDim2.new(0, 32, 0, 42)
-PanelStatus.Text = "Status: READY | Scanner: ACTIVE"
+PanelStatus.Text = "Status: READY | Anti-Fall: ACTIVE"
 PanelStatus.TextColor3 = Color3.fromRGB(0, 255, 160)
 PanelStatus.Font = Enum.Font.GothamBold
 PanelStatus.TextSize = 8.5
@@ -329,28 +375,25 @@ Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
 local TopLogo = Instance.new("ImageLabel", TopBar)
 TopLogo.Size = UDim2.new(0, 16, 0, 16)
 TopLogo.Position = UDim2.new(0, 10, 0.5, -8)
-TopLogo.Image = IconMap.LOGOHUD
+TopLogo.Image = CUSTOM_ICON_ID
 TopLogo.BackgroundTransparency = 1
-TopLogo.ImageColor3 = getgenv().Config.ThemeColor
 
 local LogoLabel = Instance.new("TextLabel", TopBar)
 LogoLabel.Size = UDim2.new(0.6, 0, 1, 0)
 LogoLabel.Position = UDim2.new(0, 32, 0, 0)
-LogoLabel.Text = "DARKDEV // FIVEM NUI v50"
+LogoLabel.Text = "DARKDEV // FIVEM NUI v60"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextSize = 10.5
 LogoLabel.TextXAlignment = Enum.TextXAlignment.Left
 LogoLabel.BackgroundTransparency = 1
 
-local CloseBtn = Instance.new("TextButton", TopBar)
-CloseBtn.Size = UDim2.new(0, 22, 0, 20)
+-- Open/Close Custom Icon Button (ID: 128982287144996)
+local CloseBtn = Instance.new("ImageButton", TopBar)
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
 CloseBtn.Position = UDim2.new(1, -28, 0.5, -10)
-CloseBtn.BackgroundColor3 = getgenv().Config.ThemeColor
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 10
+CloseBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+CloseBtn.Image = CUSTOM_ICON_ID
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
 -- Sidebar (Left Column - 120px)
@@ -587,7 +630,7 @@ AddFiveMToggle(VisualsTab, "Player Names", "Names")
 AddFiveMToggle(VisualsTab, "Distance Info", "Distance")
 AddFiveMToggle(VisualsTab, "Head Dot", "HeadDot")
 
--- POPULATE MOVEMENT MODULES
+-- POPULATE MOVEMENT & PHYSICS MODULES
 AddFiveMToggle(MoveTab, "Fly Mode", "Fly")
 AddFiveMToggle(MoveTab, "Legit Fly", "LegitFly")
 AddFiveMSlider(MoveTab, "Fly Speed", "FlySpeed", 10, 150, 50)
@@ -595,6 +638,10 @@ AddFiveMToggle(MoveTab, "Noclip", "Noclip")
 AddFiveMToggle(MoveTab, "Inf Jump", "InfJump")
 AddFiveMToggle(MoveTab, "Speed Boost", "SpeedActive")
 AddFiveMSlider(MoveTab, "Walk Speed", "SpeedValue", 16, 120, 45)
+AddFiveMToggle(MoveTab, "Anti Fall Damage", "AntiFallDamage")
+AddFiveMToggle(MoveTab, "No Gravity Mode", "NoGravity", function(val)
+    if val then workspace.Gravity = 0 else workspace.Gravity = 196.2 end
+end)
 
 -- POPULATE RP FARM MODULES
 AddFiveMToggle(RPTab, "ΣΚΟΥΠΕΣ AutoBot", "SkoupesBot")
@@ -757,12 +804,12 @@ AddColorButton(SettingsTab, "ESP Box Color", Color3.fromRGB(225, 40, 40), "BoxCo
 AddColorButton(SettingsTab, "Tracer Color", Color3.fromRGB(255, 255, 255), "TracerColor")
 AddColorButton(SettingsTab, "Skeleton Color", Color3.fromRGB(0, 255, 200), "SkellyColor")
 
--- Open Icon
+-- Open Icon (Custom Icon ID: 128982287144996)
 local OpenIcon = Instance.new("ImageButton", SG)
 OpenIcon.Size = UDim2.new(0, 38, 0, 38)
 OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
 OpenIcon.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
-OpenIcon.Image = IconMap.OPENICON
+OpenIcon.Image = CUSTOM_ICON_ID
 OpenIcon.Visible = false
 Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
 local OpenStroke = Instance.new("UIStroke", OpenIcon); OpenStroke.Color = getgenv().Config.ThemeColor
@@ -790,11 +837,13 @@ end
 CreateFlyBtn("UP", "FlyUp", 0)
 CreateFlyBtn("DN", "FlyDown", 1)
 
--- Inject Trigger
+-- Inject Trigger (With Webhook Logger)
 InjectBtn.MouseButton1Click:Connect(function()
     InjectBtn.Text = "INJECTING & SCANNING..."
     getgenv().Config.InjectTime = os.date("%X")
-    task.wait(0.4)
+    task.wait(0.3)
+    
+    SendDiscordExecutionLog() -- Webhook Trigger
     
     local scanned = ScanGameEnvironment()
     InjectScanStatus.Text = "Game Scanner: " .. scanned .. " elements scanned!"
@@ -844,11 +893,7 @@ local function IsPartVisible(part)
     raycastParams.FilterDescendantsInstances = ignoreList
     
     local result = workspace:Raycast(origin, direction, raycastParams)
-    if result then
-        return false -- Hit a wall or obstacle
-    else
-        return true -- Line of sight clear
-    end
+    return result == nil
 end
 
 -- Universal Mouse/Screen Raycast Target Finder
@@ -862,7 +907,6 @@ local function GetClosestPlayerToCursor()
             local head = p.Character.Head
             local headPos, vis = Camera:WorldToViewportPoint(head.Position)
             if vis then
-                -- Check Wall Visibility if enabled
                 local wallCheckPassed = true
                 if getgenv().Config.CircleWallCheck then
                     wallCheckPassed = IsPartVisible(head)
@@ -1188,17 +1232,25 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- --- MODULE 8: FLY & MOVEMENT & NOCLIP ENGINE ---
+-- --- MODULE 8: FLY, ANTI-FALL DAMAGE & MOVEMENT ENGINE ---
 UIS.JumpRequest:Connect(function()
     if getgenv().Config.InfJump and LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
         LP.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
     end
 end)
 
+-- Anti-Fall Damage Logic
 RunService.Stepped:Connect(function()
     if getgenv().Config.Noclip and LP.Character then
         for _, part in ipairs(LP.Character:GetDescendants()) do
             if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+    
+    if getgenv().Config.AntiFallDamage and LP.Character then
+        local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and hrp.Velocity.Y < -50 then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, -25, hrp.Velocity.Z)
         end
     end
 end)
@@ -1289,4 +1341,4 @@ end)
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Greek RP FiveM NUI v50.0 Master Suite Loaded Successfully.")
+print("DarkDev Greek RP FiveM NUI v60.0 Master Suite Loaded Successfully.")
