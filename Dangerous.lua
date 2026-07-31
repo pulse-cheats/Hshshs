@@ -1,7 +1,7 @@
 --[[
-    DARKDEV GREEK RP - ULTIMATE PERFECT MASTER SUITE v60.0 (EXTREME FIVEM NUI REDESIGN)
+    DARKDEV GREEK RP - ULTIMATE PERFECT MASTER SUITE v70.0 (PREMIUM FIVEM GLASS NUI)
     Architect: DarkDev Team
-    Features: Multi-Run Safe, Webhook Logger, Anti-Fall Damage, Gravity Control, Enhanced Game Scanner, Custom Icon Support, WallCheck CircleAim.
+    Features: Glassmorphism FiveM UI, Multi-Run Protected, Live Webhook Embed Logger on Inject, Anti-Fall, Game Scanner Engine.
 --]]
 
 repeat task.wait() until game:IsLoaded()
@@ -67,9 +67,9 @@ getgenv().Config = {
     HeadDot = false,
     Names = true,
     Distance = true,
-    BoxColor = Color3.fromRGB(225, 40, 40),
+    BoxColor = Color3.fromRGB(235, 45, 45),
     TracerColor = Color3.fromRGB(255, 255, 255),
-    SkellyColor = Color3.fromRGB(0, 255, 200),
+    SkellyColor = Color3.fromRGB(0, 240, 200),
     
     -- Movement & Physics
     Fly = false,
@@ -83,8 +83,6 @@ getgenv().Config = {
     SpeedValue = 45,
     AntiFallDamage = true,
     NoGravity = false,
-    GravityValue = 196.2,
-    LowGravity = false,
     
     -- RP Farm
     SkoupesBot = false,
@@ -106,7 +104,7 @@ getgenv().Config = {
     AutoScanOnInject = true,
     
     -- Settings & Customizations
-    ThemeColor = Color3.fromRGB(225, 40, 40),
+    ThemeColor = Color3.fromRGB(235, 45, 45),
     AntiAFK = true,
     Godmode = false,
     UIKeybind = Enum.KeyCode.RightControl,
@@ -117,7 +115,7 @@ getgenv().Config = {
     ScannedBinds = {}
 }
 
--- --- DISCORD WEBHOOK EXECUTION LOGGER ---
+-- --- DISCORD WEBHOOK LOG TRIGGER (EXACT EMBED FORMAT) ---
 local function SendDiscordExecutionLog()
     task.spawn(function()
         pcall(function()
@@ -131,16 +129,14 @@ local function SendDiscordExecutionLog()
             
             local embedData = {
                 ["title"] = "🚀 DarkDev live Exe",
-                ["description"] = "A new player has injected the DarkDev Greek RP Master Suite v60.0!",
-                ["color"] = 14700072, -- Crimson Red
+                ["description"] = channelTag,
+                ["color"] = 15403565, -- Crimson Red Accent
                 ["fields"] = {
-                    { ["name"] = "New launch (time)", ["value"] = os.date("%Y-%m-%d %H:%M:%S") .. " (UTC)", ["inline"] = true },
-                    { ["name"] = "Player name", ["value"] = LP.Name .. " (@" .. LP.DisplayName .. ")", ["inline"] = true },
-                    { ["name"] = "Player id", ["value"] = tostring(LP.UserId), ["inline"] = true },
-                    { ["name"] = "Game Name", ["value"] = gameName .. " (" .. tostring(game.PlaceId) .. ")", ["inline"] = true },
-                    { ["name"] = "Platform Target", ["value"] = channelTag, ["inline"] = true }
+                    { ["name"] = "New launch (time) :", ["value"] = os.date("%Y-%m-%d %H:%M:%S") .. " (UTC)", ["inline"] = false },
+                    { ["name"] = "Player id :", ["value"] = tostring(LP.UserId), ["inline"] = true },
+                    { ["name"] = "Player name :", ["value"] = LP.Name .. " (@" .. LP.DisplayName .. ")", ["inline"] = true }
                 },
-                ["footer"] = { ["text"] = "DarkDev Greek RP v60.0 Master Suite" }
+                ["footer"] = { ["text"] = "DarkDev Greek RP v70.0 Master Suite" }
             }
             
             local payload = HttpService:JSONEncode({ ["embeds"] = { embedData } })
@@ -154,7 +150,7 @@ local function SendDiscordExecutionLog()
     end)
 end
 
--- --- NOTIFICATION HELPER (WITH CUSTOM ICON ID) ---
+-- --- NOTIFICATION HELPER ---
 local function SendDarkDevNotification(title, text)
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -195,9 +191,9 @@ local function ScanGameEnvironment()
     return scannedCount
 end
 
--- --- GUI CREATION (Sleek FiveM NUI Style) ---
+-- --- GUI CREATION (Modern Glassmorphism FiveM NUI Style) ---
 local SG = Instance.new("ScreenGui")
-SG.Name = "DarkDevFiveMNUI_v60"
+SG.Name = "DarkDevFiveMNUI_v70"
 SG.ResetOnSpawn = false
 SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 getgenv().DarkDevLoadedGui = SG
@@ -215,42 +211,49 @@ end)
 
 if not SG.Parent then SG.Parent = LP:WaitForChild("PlayerGui") end
 
--- --- 1. INJECTOR SCREEN ---
+-- --- 1. INJECTOR SCREEN (Sleek Glass Card) ---
 local InjectorFrame = Instance.new("Frame", SG)
 InjectorFrame.Name = "InjectorFrame"
-InjectorFrame.Size = UDim2.new(0, 310, 0, 175)
-InjectorFrame.Position = UDim2.new(0.5, -155, 0.5, -87)
-InjectorFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+InjectorFrame.Size = UDim2.new(0, 320, 0, 180)
+InjectorFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+InjectorFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
 InjectorFrame.BorderSizePixel = 0
 InjectorFrame.Active = true
 InjectorFrame.Draggable = true
 
-Instance.new("UICorner", InjectorFrame).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", InjectorFrame).CornerRadius = UDim.new(0, 10)
 local IStroke = Instance.new("UIStroke", InjectorFrame)
 IStroke.Color = getgenv().Config.ThemeColor
 IStroke.Thickness = 1.5
 
+-- Top Accent Bar for Injector
+local InjectAccent = Instance.new("Frame", InjectorFrame)
+InjectAccent.Size = UDim2.new(1, 0, 0, 3)
+InjectAccent.BackgroundColor3 = getgenv().Config.ThemeColor
+InjectAccent.BorderSizePixel = 0
+Instance.new("UICorner", InjectAccent).CornerRadius = UDim.new(0, 10)
+
 local InjectHeaderImg = Instance.new("ImageLabel", InjectorFrame)
-InjectHeaderImg.Size = UDim2.new(0, 22, 0, 22)
-InjectHeaderImg.Position = UDim2.new(0, 12, 0, 10)
+InjectHeaderImg.Size = UDim2.new(0, 24, 0, 24)
+InjectHeaderImg.Position = UDim2.new(0, 14, 0, 14)
 InjectHeaderImg.Image = CUSTOM_ICON_ID
 InjectHeaderImg.BackgroundTransparency = 1
 
 local InjectTitle = Instance.new("TextLabel", InjectorFrame)
-InjectTitle.Size = UDim2.new(1, -45, 0, 22)
-InjectTitle.Position = UDim2.new(0, 40, 0, 10)
+InjectTitle.Size = UDim2.new(1, -50, 0, 24)
+InjectTitle.Position = UDim2.new(0, 44, 0, 14)
 InjectTitle.BackgroundTransparency = 1
-InjectTitle.Text = "DARKDEV FIVEM NUI v60"
+InjectTitle.Text = "DARKDEV FIVEM NUI v70"
 InjectTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 InjectTitle.Font = Enum.Font.GothamBold
 InjectTitle.TextSize = 13
 InjectTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 local InjectDesc = Instance.new("TextLabel", InjectorFrame)
-InjectDesc.Size = UDim2.new(1, -24, 0, 38)
-InjectDesc.Position = UDim2.new(0, 12, 0, 42)
+InjectDesc.Size = UDim2.new(1, -28, 0, 36)
+InjectDesc.Position = UDim2.new(0, 14, 0, 44)
 InjectDesc.BackgroundTransparency = 1
-InjectDesc.Text = "Greek RP Master Suite - Webhook Logging, Anti-Fall Damage, NoGravity & FiveM NUI UI"
+InjectDesc.Text = "Greek RP Premium NUI - Glassmorphism UI, Auto Webhook Logging & Multi-Run Safe Engine"
 InjectDesc.TextColor3 = Color3.fromRGB(160, 160, 175)
 InjectDesc.Font = Enum.Font.Gotham
 InjectDesc.TextSize = 9.5
@@ -258,31 +261,31 @@ InjectDesc.TextWrapped = true
 InjectDesc.TextXAlignment = Enum.TextXAlignment.Left
 
 local InjectScanStatus = Instance.new("TextLabel", InjectorFrame)
-InjectScanStatus.Size = UDim2.new(1, -24, 0, 18)
-InjectScanStatus.Position = UDim2.new(0, 12, 0, 84)
+InjectScanStatus.Size = UDim2.new(1, -28, 0, 18)
+InjectScanStatus.Position = UDim2.new(0, 14, 0, 86)
 InjectScanStatus.BackgroundTransparency = 1
-InjectScanStatus.Text = "Game Scanner: Ready"
+InjectScanStatus.Text = "Status: Ready for Injection & Logging"
 InjectScanStatus.TextColor3 = Color3.fromRGB(0, 255, 180)
 InjectScanStatus.Font = Enum.Font.GothamBold
 InjectScanStatus.TextSize = 9
 InjectScanStatus.TextXAlignment = Enum.TextXAlignment.Left
 
 local InjectBtn = Instance.new("TextButton", InjectorFrame)
-InjectBtn.Size = UDim2.new(0.92, 0, 0, 32)
-InjectBtn.Position = UDim2.new(0.04, 0, 0, 125)
+InjectBtn.Size = UDim2.new(0.92, 0, 0, 34)
+InjectBtn.Position = UDim2.new(0.04, 0, 0, 128)
 InjectBtn.BackgroundColor3 = getgenv().Config.ThemeColor
-InjectBtn.Text = "INJECT & SCAN GAME"
+InjectBtn.Text = "⚡ INJECT FIVEM NUI"
 InjectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 InjectBtn.Font = Enum.Font.GothamBold
-InjectBtn.TextSize = 11
+InjectBtn.TextSize = 11.5
 Instance.new("UICorner", InjectBtn).CornerRadius = UDim.new(0, 6)
 
--- --- 2. SERVER PANEL (FiveM Compact Top HUD) ---
+-- --- 2. SERVER PANEL (FiveM Sleek Top Bar HUD) ---
 local ServerPanel = Instance.new("Frame", SG)
 ServerPanel.Name = "ServerPanel"
-ServerPanel.Size = UDim2.new(0, 290, 0, 62)
-ServerPanel.Position = UDim2.new(0.5, -145, 0.015, 0)
-ServerPanel.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+ServerPanel.Size = UDim2.new(0, 300, 0, 64)
+ServerPanel.Position = UDim2.new(0.5, -150, 0.015, 0)
+ServerPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
 ServerPanel.Visible = false
 ServerPanel.BorderSizePixel = 0
 ServerPanel.Active = true
@@ -294,24 +297,24 @@ SStroke.Color = getgenv().Config.ThemeColor
 SStroke.Thickness = 1.5
 
 local PanelLogo = Instance.new("ImageLabel", ServerPanel)
-PanelLogo.Size = UDim2.new(0, 20, 0, 20)
-PanelLogo.Position = UDim2.new(0, 8, 0, 8)
+PanelLogo.Size = UDim2.new(0, 22, 0, 22)
+PanelLogo.Position = UDim2.new(0, 10, 0, 10)
 PanelLogo.Image = CUSTOM_ICON_ID
 PanelLogo.BackgroundTransparency = 1
 
 local PanelTitle = Instance.new("TextLabel", ServerPanel)
-PanelTitle.Size = UDim2.new(1, -90, 0, 20)
-PanelTitle.Position = UDim2.new(0, 32, 0, 8)
-PanelTitle.Text = "DARKDEV RP | FIVEM NUI"
+PanelTitle.Size = UDim2.new(1, -95, 0, 20)
+PanelTitle.Position = UDim2.new(0, 38, 0, 8)
+PanelTitle.Text = "DARKDEV RP | FIVEM HUD"
 PanelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 PanelTitle.Font = Enum.Font.GothamBold
-PanelTitle.TextSize = 10.5
+PanelTitle.TextSize = 11
 PanelTitle.TextXAlignment = Enum.TextXAlignment.Left
 PanelTitle.BackgroundTransparency = 1
 
 local PanelSub = Instance.new("TextLabel", ServerPanel)
-PanelSub.Size = UDim2.new(1, -90, 0, 14)
-PanelSub.Position = UDim2.new(0, 32, 0, 26)
+PanelSub.Size = UDim2.new(1, -95, 0, 14)
+PanelSub.Position = UDim2.new(0, 38, 0, 28)
 PanelSub.Text = "Player: " .. LP.Name .. " | ID: " .. LP.UserId
 PanelSub.TextColor3 = Color3.fromRGB(170, 170, 185)
 PanelSub.Font = Enum.Font.Gotham
@@ -320,9 +323,9 @@ PanelSub.TextXAlignment = Enum.TextXAlignment.Left
 PanelSub.BackgroundTransparency = 1
 
 local PanelStatus = Instance.new("TextLabel", ServerPanel)
-PanelStatus.Size = UDim2.new(1, -90, 0, 14)
-PanelStatus.Position = UDim2.new(0, 32, 0, 42)
-PanelStatus.Text = "Status: READY | Anti-Fall: ACTIVE"
+PanelStatus.Size = UDim2.new(1, -95, 0, 14)
+PanelStatus.Position = UDim2.new(0, 38, 0, 44)
+PanelStatus.Text = "Status: ACTIVE | Webhook: SENT"
 PanelStatus.TextColor3 = Color3.fromRGB(0, 255, 160)
 PanelStatus.Font = Enum.Font.GothamBold
 PanelStatus.TextSize = 8.5
@@ -330,8 +333,8 @@ PanelStatus.TextXAlignment = Enum.TextXAlignment.Left
 PanelStatus.BackgroundTransparency = 1
 
 local PanelOpenMenuBtn = Instance.new("TextButton", ServerPanel)
-PanelOpenMenuBtn.Size = UDim2.new(0, 42, 0, 20)
-PanelOpenMenuBtn.Position = UDim2.new(1, -48, 0, 8)
+PanelOpenMenuBtn.Size = UDim2.new(0, 44, 0, 20)
+PanelOpenMenuBtn.Position = UDim2.new(1, -50, 0, 8)
 PanelOpenMenuBtn.BackgroundColor3 = getgenv().Config.ThemeColor
 PanelOpenMenuBtn.Text = "MENU"
 PanelOpenMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -340,21 +343,21 @@ PanelOpenMenuBtn.TextSize = 8.5
 Instance.new("UICorner", PanelOpenMenuBtn).CornerRadius = UDim.new(0, 4)
 
 local PanelCloseBtn = Instance.new("TextButton", ServerPanel)
-PanelCloseBtn.Size = UDim2.new(0, 48, 0, 20)
-PanelCloseBtn.Position = UDim2.new(1, -54, 0, 32)
-PanelCloseBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+PanelCloseBtn.Size = UDim2.new(0, 50, 0, 20)
+PanelCloseBtn.Position = UDim2.new(1, -56, 0, 34)
+PanelCloseBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 PanelCloseBtn.Text = "HIDE"
 PanelCloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 PanelCloseBtn.Font = Enum.Font.GothamBold
 PanelCloseBtn.TextSize = 8.5
 Instance.new("UICorner", PanelCloseBtn).CornerRadius = UDim.new(0, 4)
 
--- --- 3. MAIN FIVEM NUI FRAME (Compact 500x320 Size) ---
+-- --- 3. MAIN FIVEM NUI FRAME (Glassmorphism Style) ---
 local Main = Instance.new("Frame", SG)
 Main.Name = "MainNUI"
 Main.Size = UDim2.new(0, 500, 0, 320)
 Main.Position = UDim2.new(0.5, -250, 0.5, -160)
-Main.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+Main.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
 Main.Visible = false
 Main.BorderSizePixel = 0
 Main.Active = true
@@ -365,30 +368,30 @@ local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Color = getgenv().Config.ThemeColor
 MainStroke.Thickness = 1.5
 
--- Top Bar
+-- Top Bar with Custom Icon Close Button
 local TopBar = Instance.new("Frame", Main)
 TopBar.Size = UDim2.new(1, 0, 0, 32)
-TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+TopBar.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
 TopBar.BorderSizePixel = 0
 Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
 
 local TopLogo = Instance.new("ImageLabel", TopBar)
-TopLogo.Size = UDim2.new(0, 16, 0, 16)
-TopLogo.Position = UDim2.new(0, 10, 0.5, -8)
+TopLogo.Size = UDim2.new(0, 18, 0, 18)
+TopLogo.Position = UDim2.new(0, 10, 0.5, -9)
 TopLogo.Image = CUSTOM_ICON_ID
 TopLogo.BackgroundTransparency = 1
 
 local LogoLabel = Instance.new("TextLabel", TopBar)
 LogoLabel.Size = UDim2.new(0.6, 0, 1, 0)
-LogoLabel.Position = UDim2.new(0, 32, 0, 0)
-LogoLabel.Text = "DARKDEV // FIVEM NUI v60"
+LogoLabel.Position = UDim2.new(0, 34, 0, 0)
+LogoLabel.Text = "DARKDEV // FIVEM NUI v70"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextSize = 10.5
 LogoLabel.TextXAlignment = Enum.TextXAlignment.Left
 LogoLabel.BackgroundTransparency = 1
 
--- Open/Close Custom Icon Button (ID: 128982287144996)
+-- Open/Close Custom Icon Button
 local CloseBtn = Instance.new("ImageButton", TopBar)
 CloseBtn.Size = UDim2.new(0, 20, 0, 20)
 CloseBtn.Position = UDim2.new(1, -28, 0.5, -10)
@@ -396,11 +399,11 @@ CloseBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 CloseBtn.Image = CUSTOM_ICON_ID
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- Sidebar (Left Column - 120px)
+-- Sidebar (Left Column)
 local Sidebar = Instance.new("Frame", Main)
 Sidebar.Size = UDim2.new(0, 120, 1, -38)
 Sidebar.Position = UDim2.new(0, 6, 0, 34)
-Sidebar.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+Sidebar.BackgroundColor3 = Color3.fromRGB(6, 6, 10)
 Sidebar.BorderSizePixel = 0
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 6)
 
@@ -426,7 +429,7 @@ local function CreateTab(name, iconId, order)
     local btn = Instance.new("TextButton", Sidebar)
     btn.LayoutOrder = order or 1
     btn.Size = UDim2.new(0.92, 0, 0, 28)
-    btn.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    btn.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
     btn.Text = ""
     btn.AutoButtonColor = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
@@ -475,7 +478,7 @@ local function CreateTab(name, iconId, order)
                 tData.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
                 tData.Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
             else
-                tData.Btn.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+                tData.Btn.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
                 tData.Label.TextColor3 = Color3.fromRGB(160, 160, 175)
                 tData.Icon.ImageColor3 = getgenv().Config.ThemeColor
             end
@@ -498,11 +501,11 @@ TabButtons["COMBAT"].Btn.BackgroundColor3 = getgenv().Config.ThemeColor
 TabButtons["COMBAT"].Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 TabButtons["COMBAT"].Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 
--- Card Component Helper (FiveM Modern Switch)
+-- Card Component Helper (FiveM Glass Switch)
 local function AddFiveMToggle(parentTab, txt, key, callback)
     local card = Instance.new("Frame", parentTab)
     card.Size = UDim2.new(0.96, 0, 0, 28)
-    card.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    card.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
     
     local label = Instance.new("TextLabel", card)
@@ -518,7 +521,7 @@ local function AddFiveMToggle(parentTab, txt, key, callback)
     local switchBg = Instance.new("TextButton", card)
     switchBg.Size = UDim2.new(0, 26, 0, 14)
     switchBg.Position = UDim2.new(1, -32, 0.5, -7)
-    switchBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    switchBg.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
     switchBg.Text = ""
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
     
@@ -532,7 +535,7 @@ local function AddFiveMToggle(parentTab, txt, key, callback)
         getgenv().Config[key] = not getgenv().Config[key]
         local active = getgenv().Config[key]
         
-        TweenService:Create(switchBg, TweenInfo.new(0.18), {BackgroundColor3 = active and getgenv().Config.ThemeColor or Color3.fromRGB(30, 30, 40)}):Play()
+        TweenService:Create(switchBg, TweenInfo.new(0.18), {BackgroundColor3 = active and getgenv().Config.ThemeColor or Color3.fromRGB(28, 28, 38)}):Play()
         TweenService:Create(knob, TweenInfo.new(0.18), {Position = active and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5), BackgroundColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(130, 130, 130)}):Play()
         label.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 195)
         
@@ -546,7 +549,7 @@ end
 local function AddFiveMSlider(parentTab, txt, key, minVal, maxVal, defaultVal, callback)
     local card = Instance.new("Frame", parentTab)
     card.Size = UDim2.new(0.96, 0, 0, 36)
-    card.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    card.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
     
     local label = Instance.new("TextLabel", card)
@@ -572,7 +575,7 @@ local function AddFiveMSlider(parentTab, txt, key, minVal, maxVal, defaultVal, c
     local sliderBar = Instance.new("TextButton", card)
     sliderBar.Size = UDim2.new(0.92, 0, 0, 6)
     sliderBar.Position = UDim2.new(0.04, 0, 0, 22)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     sliderBar.Text = ""
     Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1, 0)
     
@@ -657,7 +660,7 @@ AddFiveMToggle(RPTab, "Fullbright World", "Fullbright")
 -- POPULATE GAME SCANNER TAB
 local ScanCard = Instance.new("Frame", ScanTab)
 ScanCard.Size = UDim2.new(0.96, 0, 0, 125)
-ScanCard.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+ScanCard.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
 Instance.new("UICorner", ScanCard).CornerRadius = UDim.new(0, 6)
 local ScanStroke = Instance.new("UIStroke", ScanCard)
 ScanStroke.Color = getgenv().Config.ThemeColor
@@ -706,7 +709,7 @@ end)
 -- BYPASS TAB LIVE ENGINE
 local LiveBypassCard = Instance.new("Frame", BypassTab)
 LiveBypassCard.Size = UDim2.new(0.96, 0, 0, 110)
-LiveBypassCard.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+LiveBypassCard.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
 Instance.new("UICorner", LiveBypassCard).CornerRadius = UDim.new(0, 6)
 local LStroke = Instance.new("UIStroke", LiveBypassCard); LStroke.Color = getgenv().Config.ThemeColor
 
@@ -722,7 +725,7 @@ LiveStatusText.Font = Enum.Font.Code; LiveStatusText.TextSize = 8; LiveStatusTex
 
 local LiveBarBg = Instance.new("Frame", LiveBypassCard)
 LiveBarBg.Size = UDim2.new(0.92, 0, 0, 12); LiveBarBg.Position = UDim2.new(0.04, 0, 0, 44)
-LiveBarBg.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+LiveBarBg.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
 Instance.new("UICorner", LiveBarBg).CornerRadius = UDim.new(0, 3); Instance.new("UIStroke", LiveBarBg).Color = getgenv().Config.ThemeColor
 
 local LiveBarFill = Instance.new("Frame", LiveBarBg)
@@ -778,7 +781,7 @@ end)
 local function AddColorButton(parentTab, txt, defaultColor, colorKey)
     local card = Instance.new("Frame", parentTab)
     card.Size = UDim2.new(0.96, 0, 0, 28)
-    card.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+    card.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
     
     local label = Instance.new("TextLabel", card)
@@ -791,7 +794,7 @@ local function AddColorButton(parentTab, txt, defaultColor, colorKey)
     colorBox.BackgroundColor3 = defaultColor; colorBox.Text = ""
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(0, 4)
     
-    local colors = {Color3.fromRGB(225, 40, 40), Color3.fromRGB(0, 255, 255), Color3.fromRGB(124, 77, 255), Color3.fromRGB(0, 255, 100), Color3.fromRGB(255, 255, 0)}
+    local colors = {Color3.fromRGB(235, 45, 45), Color3.fromRGB(0, 255, 255), Color3.fromRGB(124, 77, 255), Color3.fromRGB(0, 255, 100), Color3.fromRGB(255, 255, 0)}
     local cIdx = 1
     colorBox.MouseButton1Click:Connect(function()
         cIdx = (cIdx % #colors) + 1
@@ -800,15 +803,15 @@ local function AddColorButton(parentTab, txt, defaultColor, colorKey)
     end)
 end
 
-AddColorButton(SettingsTab, "ESP Box Color", Color3.fromRGB(225, 40, 40), "BoxColor")
+AddColorButton(SettingsTab, "ESP Box Color", Color3.fromRGB(235, 45, 45), "BoxColor")
 AddColorButton(SettingsTab, "Tracer Color", Color3.fromRGB(255, 255, 255), "TracerColor")
 AddColorButton(SettingsTab, "Skeleton Color", Color3.fromRGB(0, 255, 200), "SkellyColor")
 
--- Open Icon (Custom Icon ID: 128982287144996)
+-- Open Icon
 local OpenIcon = Instance.new("ImageButton", SG)
 OpenIcon.Size = UDim2.new(0, 38, 0, 38)
 OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
-OpenIcon.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+OpenIcon.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
 OpenIcon.Image = CUSTOM_ICON_ID
 OpenIcon.Visible = false
 Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
@@ -825,7 +828,7 @@ local function CreateFlyBtn(txt, key, pos)
     local b = Instance.new("TextButton", FlyOverlay)
     b.Size = UDim2.new(1, 0, 0, 38)
     b.Position = UDim2.new(0, 0, 0, pos * 44)
-    b.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    b.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
     b.Text = txt
     b.TextColor3 = getgenv().Config.ThemeColor
     b.Font = Enum.Font.GothamBold
@@ -837,14 +840,15 @@ end
 CreateFlyBtn("UP", "FlyUp", 0)
 CreateFlyBtn("DN", "FlyDown", 1)
 
--- Inject Trigger (With Webhook Logger)
+-- Inject Trigger (TRIGGER WEBHOOK EMBED ON INJECT CLICK)
 InjectBtn.MouseButton1Click:Connect(function()
-    InjectBtn.Text = "INJECTING & SCANNING..."
+    InjectBtn.Text = "INJECTING & LOGGING..."
     getgenv().Config.InjectTime = os.date("%X")
-    task.wait(0.3)
     
-    SendDiscordExecutionLog() -- Webhook Trigger
+    -- Send Webhook Log on Inject Click!
+    SendDiscordExecutionLog()
     
+    task.wait(0.4)
     local scanned = ScanGameEnvironment()
     InjectScanStatus.Text = "Game Scanner: " .. scanned .. " elements scanned!"
     task.wait(0.3)
@@ -856,7 +860,7 @@ InjectBtn.MouseButton1Click:Connect(function()
     ServerPanel.Visible = true
     Main.Visible = true
     
-    SendDarkDevNotification("FiveM NUI", "Injected & Scanned Successfully - " .. gameName)
+    SendDarkDevNotification("FiveM NUI", "Injected & Logged Successfully - " .. gameName)
 end)
 
 PanelOpenMenuBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
@@ -875,7 +879,6 @@ local CircleStroke = Instance.new("UIStroke", FOVCircle)
 CircleStroke.Color = getgenv().Config.ThemeColor
 CircleStroke.Thickness = 1.5
 
--- WallCheck helper function using Raycasting
 local function IsPartVisible(part)
     if not part or not part.Parent then return false end
     local origin = Camera.CFrame.Position
@@ -896,7 +899,6 @@ local function IsPartVisible(part)
     return result == nil
 end
 
--- Universal Mouse/Screen Raycast Target Finder
 local function GetClosestPlayerToCursor()
     local mousePos = UIS:GetMouseLocation()
     local closestPlayer = nil
@@ -1341,4 +1343,4 @@ end)
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then CreateESP(p) end end
 Players.PlayerAdded:Connect(CreateESP)
 
-print("DarkDev Greek RP FiveM NUI v60.0 Master Suite Loaded Successfully.")
+print("DarkDev Greek RP FiveM NUI v70.0 Master Suite Loaded Successfully.")
