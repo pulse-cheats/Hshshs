@@ -1,8 +1,3 @@
---[[
-    DARKDEV - SCRIPT UNDER DEVELOPMENT NOTIFIER
-    Displays a smooth Notification & Center Banner on Execution
---]]
-
 repeat task.wait() until game:IsLoaded()
 
 local CoreGui = game:GetService("CoreGui")
@@ -10,113 +5,92 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LP = Players.LocalPlayer
 
--- --- CLEANUP PREVIOUS NOTIFIER ---
-if CoreGui:FindFirstChild("DarkDevDevNotifier") then
-    CoreGui:FindFirstChild("DarkDevDevNotifier"):Destroy()
+if CoreGui:FindFirstChild("DevNoticeUI") then
+    CoreGui:FindFirstChild("DevNoticeUI"):Destroy()
 end
 
--- --- SCREEN GUI ROOT ---
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DarkDevDevNotifier"
-ScreenGui.ResetOnSpawn = false
-pcall(function() ScreenGui.Parent = CoreGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = LP:WaitForChild("PlayerGui") end
+local gui = Instance.new("ScreenGui")
+gui.Name = "DevNoticeUI"
+gui.ResetOnSpawn = false
+pcall(function() gui.Parent = CoreGui end)
+if not gui.Parent then gui.Parent = LP:WaitForChild("PlayerGui") end
 
--- --- CENTER BANNER CARD ---
-local Banner = Instance.new("Frame")
-Banner.Name = "DevBanner"
-Banner.Size = UDim2.new(0, 380, 0, 110)
-Banner.Position = UDim2.new(0.5, -190, 0, -150) -- Starts off-screen
-Banner.BackgroundColor3 = Color3.fromRGB(15, 17, 23)
-Banner.BorderSizePixel = 0
-Banner.ClipsDescendants = true
-Banner.Parent = ScreenGui
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 340, 0, 95)
+main.Position = UDim2.new(0.5, -170, 0, -120)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+main.Parent = gui
 
-local BannerCorner = Instance.new("UICorner")
-BannerCorner.CornerRadius = UDim.new(0, 10)
-BannerCorner.Parent = Banner
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = main
 
-local BannerStroke = Instance.new("UIStroke")
-BannerStroke.Thickness = 1.5
-BannerStroke.Color = Color3.fromRGB(231, 76, 60) -- Red Accent
-BannerStroke.Parent = Banner
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1
+stroke.Color = Color3.fromRGB(220, 60, 60)
+stroke.Parent = main
 
--- TOP RED ACCENT LINE
-local TopLine = Instance.new("Frame")
-TopLine.Size = UDim2.new(1, 0, 0, 3)
-TopLine.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-TopLine.BorderSizePixel = 0
-TopLine.Parent = Banner
+local redLine = Instance.new("Frame")
+redLine.Size = UDim2.new(1, 0, 0, 2)
+redLine.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+redLine.BorderSizePixel = 0
+redLine.Parent = main
 
--- DEV ICON / WARNING BADGE
-local Icon = Instance.new("ImageLabel")
-Icon.Size = UDim2.new(0, 32, 0, 32)
-Icon.Position = UDim2.new(0, 16, 0.5, -16)
-Icon.BackgroundTransparency = 1
-Icon.Image = "rbxassetid://6031097225"
-Icon.ImageColor3 = Color3.fromRGB(231, 76, 60)
-Icon.Parent = Banner
+local title = Instance.new("TextLabel")
+title.Text = "SYSTEM NOTICE"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 12
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Position = UDim2.new(0, 16, 0, 14)
+title.Size = UDim2.new(1, -50, 0, 16)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.BackgroundTransparency = 1
+title.Parent = main
 
--- TITLE & DESCRIPTION
-local Title = Instance.new("TextLabel")
-Title.Text = "DARKDEV ENGINE NOTICE"
-Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 13
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Position = UDim2.new(0, 60, 0, 20)
-Title.Size = UDim2.new(1, -70, 0, 18)
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.BackgroundTransparency = 1
-Title.Parent = Banner
+local msg = Instance.new("TextLabel")
+msg.Text = "Script is currently under development."
+msg.Font = Enum.Font.GothamMedium
+msg.TextSize = 10
+msg.TextColor3 = Color3.fromRGB(160, 160, 175)
+msg.Position = UDim2.new(0, 16, 0, 36)
+msg.Size = UDim2.new(1, -32, 0, 40)
+msg.TextXAlignment = Enum.TextXAlignment.Left
+msg.TextYAlignment = Enum.TextYAlignment.Top
+msg.TextWrapped = true
+msg.BackgroundTransparency = 1
+msg.Parent = main
 
-local Message = Instance.new("TextLabel")
-Message.Text = "This script is currently UNDER DEVELOPMENT.\nPlease check back later for updates!"
-Message.Font = Enum.Font.GothamMedium
-Message.TextSize = 10
-Message.TextColor3 = Color3.fromRGB(160, 165, 185)
-Message.Position = UDim2.new(0, 60, 0, 42)
-Message.Size = UDim2.new(1, -70, 0, 36)
-Message.TextXAlignment = Enum.TextXAlignment.Left
-Message.TextYAlignment = Enum.TextYAlignment.Top
-Message.TextWrapped = true
-Message.BackgroundTransparency = 1
-Message.Parent = Banner
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0, 20, 0, 20)
+close.Position = UDim2.new(1, -26, 0, 10)
+close.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+close.Text = "X"
+close.Font = Enum.Font.GothamBold
+close.TextColor3 = Color3.fromRGB(180, 180, 195)
+close.TextSize = 10
+close.AutoButtonColor = false
+close.Parent = main
 
--- DISMISS BUTTON
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 22, 0, 22)
-CloseBtn.Position = UDim2.new(1, -30, 0, 10)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(25, 28, 40)
-CloseBtn.Text = "X"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextColor3 = Color3.fromRGB(180, 180, 195)
-CloseBtn.TextSize = 10
-CloseBtn.AutoButtonColor = false
-CloseBtn.Parent = Banner
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 4)
+closeCorner.Parent = close
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 5)
-CloseCorner.Parent = CloseBtn
-
--- --- SMOOTH ANIMATION ---
-local function HideBanner()
-    local animOut = TweenService:Create(Banner, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -190, 0, -150)})
-    animOut:Play()
-    animOut.Completed:Connect(function()
-        ScreenGui:Destroy()
+local function hide()
+    local t = TweenService:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -170, 0, -120)})
+    t:Play()
+    t.Completed:Connect(function()
+        gui:Destroy()
     end)
 end
 
-CloseBtn.MouseButton1Click:Connect(HideBanner)
+close.MouseButton1Click:Connect(hide)
 
--- Slide In Animation
-TweenService:Create(Banner, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -190, 0, 25)}):Play()
+TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -170, 0, 20)}):Play()
 
--- Auto Close after 6 seconds
-task.delay(6, function()
-    if ScreenGui and ScreenGui.Parent then
-        HideBanner()
+task.delay(5, function()
+    if gui and gui.Parent then
+        hide()
     end
 end)
-
-print("DarkDev: Script under development notification displayed.")
